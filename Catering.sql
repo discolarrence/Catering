@@ -1,3 +1,5 @@
+CREATE DATABASE catering;
+
 USE catering;
 
 CREATE TABLE dbo.Vendors(
@@ -14,7 +16,6 @@ CREATE TABLE dbo.Product(
 	VendorID int NOT NULL,
 	VendorItemCode varchar(40) NOT NULL,
 	WeightQuantityOz int,
-	VolumeQuantityFlOz int,
 )
 
 CREATE TABLE dbo.Recipes(
@@ -29,6 +30,13 @@ CREATE TABLE dbo.Ingredients(
 	IngredientID int NOT NULL PRIMARY KEY IDENTITY(1,1),
 	RecipeID int NOT NULL,
 	ProductID int NOT NULL,
-	ProductQuantity int NOT NULL,
-	WeightOrVolume int NOT NULL
+	ProductQuantityOz int NOT NULL,
+)
+
+CREATE TABLE dbo.Orders(
+	OrderID int NOT NULL PRIMARY KEY IDENTITY(1,1),
+	RecipeID int NOT NULL,
+	ReadyBy datetime NOT NULL,
+	CateringType varchar(40) NOT NULL,
+	People int NOT NULL
 )
