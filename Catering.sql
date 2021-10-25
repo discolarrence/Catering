@@ -21,9 +21,7 @@ CREATE TABLE dbo.Product(
 CREATE TABLE dbo.Recipes(
 	RecipeID int NOT NULL PRIMARY KEY,
 	RecipeName varchar(40) NOT NULL,
-	RecipeServings int NOT NULL,
-	RecipeServingQuantity int NOT NULL,
-	RecipeServingUnit varchar(40) NOT NULL
+	RecipeServings int NOT NULL
 )
 
 CREATE TABLE dbo.Ingredients(
