@@ -10,7 +10,7 @@ CREATE TABLE dbo.Vendors(
 	VendorContact varchar(100),
 )
 
-CREATE TABLE dbo.Product(
+CREATE TABLE dbo.Products(
 	ProductID int NOT NULL PRIMARY KEY,
 	ProductName varchar(40) NOT NULL,
 	VendorID int NOT NULL,
@@ -38,3 +38,15 @@ CREATE TABLE dbo.Orders(
 	CateringType varchar(40) NOT NULL,
 	People int NOT NULL
 )
+
+--All products needed for order 1
+SELECT ProductID, 
+       ProductName, 
+	   VendorID
+  FROM Products p
+       JOIN Ingredients i
+	     ON i.ProductID = p.ProductID
+	   JOIN Orders o
+	     ON o.RecipeID = i.RecipeID
+ WHERE OrderID = 1
+ ORDER BY VendorID
