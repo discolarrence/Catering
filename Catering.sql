@@ -49,4 +49,9 @@ SELECT ProductID,
 	   JOIN Orders o
 	     ON o.RecipeID = i.RecipeID
  WHERE OrderID = 1
- ORDER BY VendorID
+ ORDER BY VendorID;
+
+ --Change corresponding product id to 1 for ingredient 1
+UPDATE Ingredients
+   SET ProductID = 1
+ WHERE IngredientID = 1
