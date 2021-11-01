@@ -45,11 +45,11 @@ WITH WeeklyProductQuantities
             	((o.Guests/r.RecipeServings) * i.IngredientQuantityOz) / p.ProductID AS ProductQuantity
            FROM Orders o
                 JOIN Recipes r
-	              ON o.RecipeID = r.RecipeID
-            	JOIN Ingredients i
-	              ON i.RecipeID = r.RecipeID
-	            JOIN Products p
-	              ON p.ProductID = i.ProductID
+				  ON o.RecipeID = r.RecipeID
+                JOIN Ingredients i
+                  ON i.RecipeID = r.RecipeID
+				JOIN Products p
+				  ON p.ProductID = i.ProductID
           WHERE o.ReadyBy BETWEEN DATEADD(Day,7,GETDATE()) AND DATEADD(Day,14,GETDATE()))
 SELECT w.ProductQuantity,
        p.ProductID, 
@@ -57,7 +57,7 @@ SELECT w.ProductQuantity,
        p.VendorID
   FROM Products p
        JOIN WeeklyProductQuantities w
-	     ON p.ProductID = w.ProductQuantity
+         ON p.ProductID = w.ProductQuantity
  GROUP BY p.ProductID
  ORDER BY VendorID;
 
