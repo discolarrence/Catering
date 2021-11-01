@@ -52,8 +52,8 @@ WITH WeeklyProductQuantities
                   ON i.RecipeID = r.RecipeID
                 JOIN Products p
                   ON p.ProductID = i.ProductID
-          WHERE o.ReadyBy BETWEEN Dateadd(Day, 7, Getdate()) AND
-                                  Dateadd(Day, 14, Getdate()))
+          WHERE o.ReadyBy BETWEEN Getdate() AND
+                                  Dateadd(Day, 17, Getdate()))
 SELECT w.ProductQuantity,
        p.ProductID,
        p.ProductName,
