@@ -41,36 +41,36 @@ CREATE TABLE dbo.Orders(
 
 GO 
 
---Weekly catering order sheet
+--Weekly catering order sheet for week of yyyy-mm-dd
 CREATE PROCEDURE dbo.WeeklyOrderSheet @Date date
 AS
-WITH WeeklyProductQuantities
-     AS (SELECT p.ProductID,
-                ( ( o.Guests / r.RecipeServings ) * i.IngredientQuantityOz ) /
-                p.ProductID AS
-                ProductQuantity
-           FROM Orders o
-                JOIN Recipes r
-                  ON o.RecipeID = r.RecipeID
-                JOIN Ingredients i
-                  ON i.RecipeID = r.RecipeID
-                JOIN Products p
-                  ON p.ProductID = i.ProductID
-          WHERE o.ReadyBy BETWEEN @Date AND
-                                  Dateadd(Day, 7, @Date))
-SELECT w.ProductQuantity,
-       p.ProductID,
-       p.ProductName,
-       p.VendorID
-  FROM Products p
-       JOIN WeeklyProductQuantities w
-         ON p.ProductID = w.ProductQuantity
- GROUP BY p.ProductID
- ORDER BY VendorID; 
+    WITH WeeklyProductQuantities
+         AS (SELECT p.ProductID,
+                    ( ( o.Guests / r.RecipeServings ) * i.IngredientQuantityOz )
+                    /
+                    p.ProductID AS
+                    ProductQuantity
+               FROM Orders o
+                    JOIN Recipes r
+                      ON o.RecipeID = r.RecipeID
+                    JOIN Ingredients i
+                      ON i.RecipeID = r.RecipeID
+                    JOIN Products p
+                      ON p.ProductID = i.ProductID
+              WHERE o.ReadyBy BETWEEN @Date AND Dateadd(Day, 7, @Date))
+    SELECT w.ProductQuantity,
+           p.ProductID,
+           p.ProductName,
+           p.VendorID
+      FROM Products p
+           JOIN WeeklyProductQuantities w
+             ON p.ProductID = w.ProductQuantity
+     GROUP BY p.ProductID
+     ORDER BY VendorID; 
 
  GO 
 
- --Change corresponding product id ingredient id
+ --Change corresponding product for an ingredient
 CREATE PROCEDURE dbo.UpdateProduct @ProductID    int,
                                    @IngredientID int
 AS
