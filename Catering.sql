@@ -15,7 +15,7 @@ CREATE TABLE dbo.Products(
 	ProductName varchar(40) NOT NULL,
 	VendorID int NOT NULL,
 	VendorItemCode varchar(40) NOT NULL,
-	WeightQuantityOz int,
+	ProductQuantityOz int,
 )
 
 CREATE TABLE dbo.Recipes(
@@ -28,7 +28,7 @@ CREATE TABLE dbo.Ingredients(
 	IngredientID int NOT NULL PRIMARY KEY,
 	RecipeID int NOT NULL,
 	ProductID int NOT NULL,
-	ProductQuantityOz int NOT NULL,
+	IngredientQuantityOz int NOT NULL,
 )
 
 CREATE TABLE dbo.Orders(
@@ -36,19 +36,29 @@ CREATE TABLE dbo.Orders(
 	RecipeID int NOT NULL,
 	ReadyBy datetime NOT NULL,
 	CateringType varchar(40) NOT NULL,
-	People int NOT NULL
-)
+	Guests int NOT NULL
+);
 
---All products needed for order 1
-SELECT ProductID, 
-       ProductName, 
-	   VendorID
+--Quantity each ingredient for each order
+WITH WeeklyProductQuantities
+     AS (SELECT p.ProductID,
+            	((o.Guests/r.RecipeServings) * i.IngredientQuantityOz) / p.ProductID AS ProductQuantity
+           FROM Orders o
+                JOIN Recipes r
+	              ON o.RecipeID = r.RecipeID
+            	JOIN Ingredients i
+	              ON i.RecipeID = r.RecipeID
+	            JOIN Products p
+	              ON p.ProductID = i.ProductID
+          WHERE o.ReadyBy BETWEEN DATEADD(Day,7,GETDATE()) AND DATEADD(Day,14,GETDATE()))
+SELECT w.ProductQuantity,
+       p.ProductID, 
+       p.ProductName, 
+	   p.VendorID
   FROM Products p
-       JOIN Ingredients i
-	     ON i.ProductID = p.ProductID
-	   JOIN Orders o
-	     ON o.RecipeID = i.RecipeID
- WHERE OrderID = 1
+       JOIN WeeklyProductQuantities w
+	     ON p.ProductID = w.ProductQuantity
+ GROUP BY p.ProductID
  ORDER BY VendorID;
 
  --Change corresponding product id to 1 for ingredient 1
