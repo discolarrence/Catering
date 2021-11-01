@@ -39,7 +39,11 @@ CREATE TABLE dbo.Orders(
 	Guests int NOT NULL
 );
 
+GO 
+
 --Weekly catering order sheet
+CREATE PROCEDURE dbo.WeeklyOrderSheet @Date date
+AS
 WITH WeeklyProductQuantities
      AS (SELECT p.ProductID,
                 ( ( o.Guests / r.RecipeServings ) * i.IngredientQuantityOz ) /
@@ -52,8 +56,8 @@ WITH WeeklyProductQuantities
                   ON i.RecipeID = r.RecipeID
                 JOIN Products p
                   ON p.ProductID = i.ProductID
-          WHERE o.ReadyBy BETWEEN Getdate() AND
-                                  Dateadd(Day, 17, Getdate()))
+          WHERE o.ReadyBy BETWEEN @Date AND
+                                  Dateadd(Day, 7, @Date))
 SELECT w.ProductQuantity,
        p.ProductID,
        p.ProductName,
