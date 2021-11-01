@@ -54,7 +54,7 @@ WITH WeeklyProductQuantities
 SELECT w.ProductQuantity,
        p.ProductID, 
        p.ProductName, 
-	   p.VendorID
+       p.VendorID
   FROM Products p
        JOIN WeeklyProductQuantities w
 	     ON p.ProductID = w.ProductQuantity
