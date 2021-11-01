@@ -39,7 +39,7 @@ CREATE TABLE dbo.Orders(
 	Guests int NOT NULL
 );
 
---Quantity each ingredient for each order
+--Weekly catering order sheet
 WITH WeeklyProductQuantities
      AS (SELECT p.ProductID,
                 ( ( o.Guests / r.RecipeServings ) * i.IngredientQuantityOz ) /
@@ -64,7 +64,12 @@ SELECT w.ProductQuantity,
  GROUP BY p.ProductID
  ORDER BY VendorID; 
 
- --Change corresponding product id to 1 for ingredient 1
-UPDATE Ingredients
-   SET ProductID = 1
- WHERE IngredientID = 1
+ GO 
+
+ --Change corresponding product id ingredient id
+CREATE PROCEDURE dbo.UpdateProduct @ProductID    int,
+                                   @IngredientID int
+AS
+    UPDATE Ingredients
+       SET ProductID = @ProductID
+     WHERE IngredientID = @IngredientID 
