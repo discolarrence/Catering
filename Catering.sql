@@ -42,24 +42,27 @@ CREATE TABLE dbo.Orders(
 --Quantity each ingredient for each order
 WITH WeeklyProductQuantities
      AS (SELECT p.ProductID,
-            	((o.Guests/r.RecipeServings) * i.IngredientQuantityOz) / p.ProductID AS ProductQuantity
+                ( ( o.Guests / r.RecipeServings ) * i.IngredientQuantityOz ) /
+                p.ProductID AS
+                ProductQuantity
            FROM Orders o
                 JOIN Recipes r
-				  ON o.RecipeID = r.RecipeID
+                  ON o.RecipeID = r.RecipeID
                 JOIN Ingredients i
                   ON i.RecipeID = r.RecipeID
-				JOIN Products p
-				  ON p.ProductID = i.ProductID
-          WHERE o.ReadyBy BETWEEN DATEADD(Day,7,GETDATE()) AND DATEADD(Day,14,GETDATE()))
+                JOIN Products p
+                  ON p.ProductID = i.ProductID
+          WHERE o.ReadyBy BETWEEN Dateadd(Day, 7, Getdate()) AND
+                                  Dateadd(Day, 14, Getdate()))
 SELECT w.ProductQuantity,
-       p.ProductID, 
-       p.ProductName, 
+       p.ProductID,
+       p.ProductName,
        p.VendorID
   FROM Products p
        JOIN WeeklyProductQuantities w
          ON p.ProductID = w.ProductQuantity
  GROUP BY p.ProductID
- ORDER BY VendorID;
+ ORDER BY VendorID; 
 
  --Change corresponding product id to 1 for ingredient 1
 UPDATE Ingredients
