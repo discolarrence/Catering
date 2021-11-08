@@ -32,7 +32,7 @@ CREATE TABLE dbo.Ingredients(
 )
 
 CREATE TABLE dbo.Orders(
-	OrderID int NOT NULL PRIMARY KEY,
+	OrderID int NOT NULL IDENTITY(1,1) PRIMARY KEY,
 	RecipeID int NOT NULL,
 	ReadyBy datetime NOT NULL,
 	CateringType varchar(40) NOT NULL,
@@ -40,6 +40,27 @@ CREATE TABLE dbo.Orders(
 );
 
 GO 
+
+--Insert Data
+
+--Create product & recipe indexes
+CREATE NONCLUSTERED INDEX Products
+    ON dbo.Products (ProductName);
+
+CREATE NONCLUSTERED INDEX Recipes
+    ON dbo.Recipes (RecipeName);
+GO
+
+--Create new order in order table
+CREATE PROCEDURE dbo.NewOrder @RecipeID int,
+	                          @ReadyBy datetime,
+	                          @CateringType varchar(40),
+	                          @Guests int
+AS
+   INSERT INTO dbo.Orders (RecipeID, ReadyBy, CateringType, Guests)
+        VALUES (@RecipeID, @ReadyBy, @CateringType, @Guests)
+
+GO
 
 --Weekly catering order sheet for week of yyyy-mm-dd
 CREATE PROCEDURE dbo.WeeklyOrderSheet @Date date
@@ -77,3 +98,14 @@ AS
     UPDATE Ingredients
        SET ProductID = @ProductID
      WHERE IngredientID = @IngredientID 
+
+GO
+
+--Delete order
+CREATE PROCEDURE dbo.DeleteOrder @OrderID int
+
+AS 
+    DELETE FROM Orders
+	      WHERE OrderID = @OrderID
+
+GO
