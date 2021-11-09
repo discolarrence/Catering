@@ -81,21 +81,20 @@ AS
   (SELECT p.ProductID,
           ( ( o.Guests / r.RecipeServings ) * i.IngredientQuantityOz ) /
           p.ProductID AS
-          ProductQuantity
+          ProductQuantity,
+		  o.ReadyBy
      FROM Orders o
           JOIN Recipes r
             ON o.RecipeID = r.RecipeID
           JOIN Ingredients i
             ON i.RecipeID = r.RecipeID
           JOIN Products p
-            ON p.ProductID = i.ProductID
-    WHERE o.ReadyBy BETWEEN GETDATE() AND Dateadd(Day, 7, GETDATE()));
+            ON p.ProductID = i.ProductID);
 
 GO 
 
-CREATE PROCEDURE WeeklyOrderSheet
+CREATE PROCEDURE WeeklyOrderSheet @Date datetime
 AS
-
     SELECT w.ProductQuantity,
            p.ProductID,
            p.ProductName,
@@ -103,7 +102,10 @@ AS
       FROM Products p
            JOIN WeeklyProductQuantities w
              ON p.ProductID = w.ProductQuantity
+	
+    
      GROUP BY p.ProductID
+	   HAVING w.ReadyBy BETWEEN @Date AND Dateadd(Day, 7, @Date)
      ORDER BY VendorID; 
 
  GO 
