@@ -1,53 +1,4 @@
-CREATE DATABASE catering;
-
-USE catering;
-
-DROP TABLE IF EXISTS Vendors
-DROP TABLE IF EXISTS Products
-DROP TABLE IF EXISTS Recipes
-DROP TABLE IF EXISTS Ingredients
-DROP TABLE IF EXISTS Orders
-
-CREATE TABLE Vendors(
-	VendorID int NOT NULL PRIMARY KEY,
-	VendorName varchar(40) NOT NULL,
-	VendorURL varchar(100),
-	VendorPhone int,
-	VendorContact varchar(100),
-)
-
-CREATE TABLE Products(
-	ProductID int NOT NULL PRIMARY KEY,
-	ProductName varchar(40) NOT NULL,
-	VendorID int NOT NULL,
-	VendorItemCode varchar(40) NOT NULL,
-	ProductQuantityOz int,
-)
-
-CREATE TABLE Recipes(
-	RecipeID int NOT NULL PRIMARY KEY,
-	RecipeName varchar(40) NOT NULL,
-	RecipeServings int NOT NULL
-)
-
-CREATE TABLE Ingredients(
-	IngredientID int NOT NULL PRIMARY KEY,
-	RecipeID int NOT NULL,
-	ProductID int NOT NULL,
-	IngredientQuantityOz int NOT NULL,
-)
-
-CREATE TABLE Orders(
-	OrderID int NOT NULL IDENTITY(1,1) PRIMARY KEY,
-	RecipeID int NOT NULL,
-	ReadyBy datetime NOT NULL,
-	CateringType varchar(40) NOT NULL,
-	Guests int NOT NULL
-);
-
-GO 
-
---Insert Data
+USE Catering;
 
 --Create product & recipe indexes
 CREATE NONCLUSTERED INDEX Products
@@ -67,7 +18,7 @@ AS
                 (RecipeID,
                  ReadyBy,
                  CateringType,
-                 Guests)
+                 NumberOfGuests)
          VALUES (@RecipeID,
                  @ReadyBy,
                  @CateringType,
@@ -76,10 +27,10 @@ AS
 GO 
 
 --Weekly catering order sheet for week of yyyy-mm-dd
-CREATE VIEW WeeklyProductQuantities
+CREATE VIEW ProductQuantitiesPerOrder
 AS
   (SELECT p.ProductID,
-          ( ( o.Guests / r.RecipeServings ) * i.IngredientQuantityOz ) /
+          ( ( o.NumberOfGuests / r.RecipeServings ) * i.IngredientQuantityOz ) /
           p.ProductID AS
           ProductQuantity,
 		  o.ReadyBy
@@ -93,26 +44,24 @@ AS
 
 GO 
 
-CREATE PROCEDURE WeeklyOrderSheet @Date datetime
+CREATE PROCEDURE WeeklyCateringOrderSheet @Date datetime
 AS
-    SELECT w.ProductQuantity,
+    SELECT q.ProductQuantity,
            p.ProductID,
            p.ProductName,
            p.VendorID
       FROM Products p
-           JOIN WeeklyProductQuantities w
-             ON p.ProductID = w.ProductQuantity
-	
-    
+           JOIN ProductQuantitiesPerOrder q
+             ON p.ProductID = q.ProductQuantity
      GROUP BY p.ProductID
-	   HAVING w.ReadyBy BETWEEN @Date AND Dateadd(Day, 7, @Date)
+	HAVING q.ReadyBy BETWEEN @Date AND Dateadd(Day, 7, @Date)
      ORDER BY VendorID; 
 
  GO 
 
  --Change corresponding product for an ingredient
 CREATE PROCEDURE UpdateProduct @ProductID    int,
-                                   @IngredientID int
+                               @IngredientID int
 AS
     UPDATE Ingredients
        SET ProductID = @ProductID
