@@ -2,7 +2,13 @@ CREATE DATABASE catering;
 
 USE catering;
 
-CREATE TABLE dbo.Vendors(
+DROP TABLE IF EXISTS Vendors
+DROP TABLE IF EXISTS Products
+DROP TABLE IF EXISTS Recipes
+DROP TABLE IF EXISTS Ingredients
+DROP TABLE IF EXISTS Orders
+
+CREATE TABLE Vendors(
 	VendorID int NOT NULL PRIMARY KEY,
 	VendorName varchar(40) NOT NULL,
 	VendorURL varchar(100),
@@ -10,7 +16,7 @@ CREATE TABLE dbo.Vendors(
 	VendorContact varchar(100),
 )
 
-CREATE TABLE dbo.Products(
+CREATE TABLE Products(
 	ProductID int NOT NULL PRIMARY KEY,
 	ProductName varchar(40) NOT NULL,
 	VendorID int NOT NULL,
@@ -18,20 +24,20 @@ CREATE TABLE dbo.Products(
 	ProductQuantityOz int,
 )
 
-CREATE TABLE dbo.Recipes(
+CREATE TABLE Recipes(
 	RecipeID int NOT NULL PRIMARY KEY,
 	RecipeName varchar(40) NOT NULL,
 	RecipeServings int NOT NULL
 )
 
-CREATE TABLE dbo.Ingredients(
+CREATE TABLE Ingredients(
 	IngredientID int NOT NULL PRIMARY KEY,
 	RecipeID int NOT NULL,
 	ProductID int NOT NULL,
 	IngredientQuantityOz int NOT NULL,
 )
 
-CREATE TABLE dbo.Orders(
+CREATE TABLE Orders(
 	OrderID int NOT NULL IDENTITY(1,1) PRIMARY KEY,
 	RecipeID int NOT NULL,
 	ReadyBy datetime NOT NULL,
@@ -45,40 +51,51 @@ GO
 
 --Create product & recipe indexes
 CREATE NONCLUSTERED INDEX Products
-    ON dbo.Products (ProductName);
+    ON Products (ProductName);
 
 CREATE NONCLUSTERED INDEX Recipes
-    ON dbo.Recipes (RecipeName);
+    ON Recipes (RecipeName);
 GO
 
 --Create new order in order table
-CREATE PROCEDURE dbo.NewOrder @RecipeID int,
-	                          @ReadyBy datetime,
-	                          @CateringType varchar(40),
-	                          @Guests int
+CREATE PROCEDURE NewOrder @RecipeID     int,
+                          @ReadyBy      datetime,
+                          @CateringType varchar(40),
+                          @Guests       int
 AS
-   INSERT INTO dbo.Orders (RecipeID, ReadyBy, CateringType, Guests)
-        VALUES (@RecipeID, @ReadyBy, @CateringType, @Guests)
+    INSERT INTO Orders
+                (RecipeID,
+                 ReadyBy,
+                 CateringType,
+                 Guests)
+         VALUES (@RecipeID,
+                 @ReadyBy,
+                 @CateringType,
+                 @Guests)
 
-GO
+GO 
 
 --Weekly catering order sheet for week of yyyy-mm-dd
-CREATE PROCEDURE dbo.WeeklyOrderSheet @Date date
+CREATE VIEW WeeklyProductQuantities
 AS
-    WITH WeeklyProductQuantities
-         AS (SELECT p.ProductID,
-                    ( ( o.Guests / r.RecipeServings ) * i.IngredientQuantityOz )
-                    /
-                    p.ProductID AS
-                    ProductQuantity
-               FROM Orders o
-                    JOIN Recipes r
-                      ON o.RecipeID = r.RecipeID
-                    JOIN Ingredients i
-                      ON i.RecipeID = r.RecipeID
-                    JOIN Products p
-                      ON p.ProductID = i.ProductID
-              WHERE o.ReadyBy BETWEEN @Date AND Dateadd(Day, 7, @Date))
+  (SELECT p.ProductID,
+          ( ( o.Guests / r.RecipeServings ) * i.IngredientQuantityOz ) /
+          p.ProductID AS
+          ProductQuantity
+     FROM Orders o
+          JOIN Recipes r
+            ON o.RecipeID = r.RecipeID
+          JOIN Ingredients i
+            ON i.RecipeID = r.RecipeID
+          JOIN Products p
+            ON p.ProductID = i.ProductID
+    WHERE o.ReadyBy BETWEEN GETDATE() AND Dateadd(Day, 7, GETDATE()));
+
+GO 
+
+CREATE PROCEDURE WeeklyOrderSheet
+AS
+
     SELECT w.ProductQuantity,
            p.ProductID,
            p.ProductName,
@@ -92,7 +109,7 @@ AS
  GO 
 
  --Change corresponding product for an ingredient
-CREATE PROCEDURE dbo.UpdateProduct @ProductID    int,
+CREATE PROCEDURE UpdateProduct @ProductID    int,
                                    @IngredientID int
 AS
     UPDATE Ingredients
@@ -102,10 +119,9 @@ AS
 GO
 
 --Delete order
-CREATE PROCEDURE dbo.DeleteOrder @OrderID int
-
-AS 
+CREATE PROCEDURE DeleteOrder @OrderID int
+AS
     DELETE FROM Orders
-	      WHERE OrderID = @OrderID
+     WHERE OrderID = @OrderID
 
-GO
+GO 
