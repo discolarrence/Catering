@@ -1,27 +1,18 @@
 USE Catering;
 
---Create product & recipe indexes
-CREATE NONCLUSTERED INDEX Products
-    ON Products (ProductName);
-
-CREATE NONCLUSTERED INDEX Recipes
-    ON Recipes (RecipeName);
 GO
 
 --Create new order in order table
 CREATE PROCEDURE NewOrder @RecipeID     int,
                           @ReadyBy      datetime,
-                          @CateringType varchar(40),
                           @Guests       int
 AS
     INSERT INTO Orders
                 (RecipeID,
                  ReadyBy,
-                 CateringType,
                  NumberOfGuests)
          VALUES (@RecipeID,
                  @ReadyBy,
-                 @CateringType,
                  @Guests)
 
 GO 
@@ -60,12 +51,12 @@ AS
  GO 
 
  --Change corresponding product for an ingredient
-CREATE PROCEDURE UpdateProduct @ProductID    int,
-                               @IngredientID int
+CREATE PROCEDURE UpdateProduct @NewProductID int,
+                               @OldProductID int
 AS
     UPDATE Ingredients
-       SET ProductID = @ProductID
-     WHERE IngredientID = @IngredientID 
+       SET ProductID = @NewProductID
+     WHERE ProductID = @OldProductID 
 
 GO
 
@@ -73,6 +64,6 @@ GO
 CREATE PROCEDURE DeleteOrder @OrderID int
 AS
     DELETE FROM Orders
-     WHERE OrderID = @OrderID
+     WHERE ID = @OrderID
 
 GO 
