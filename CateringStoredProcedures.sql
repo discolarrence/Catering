@@ -1,58 +1,101 @@
+USE Catering;
 
+--Drop stored procedures
+DROP PROCEDURE IF EXISTS dbo.NewOrder;  
+GO 
+
+DROP PROCEDURE IF EXISTS dbo.NewOrderItem;  
+GO 
+
+DROP PROCEDURE IF EXISTS dbo.DeleteOrder;  
+GO 
 --Create new order in order table
-
+CREATE PROCEDURE dbo.NewOrder @CateringType int,
+                              @Date         date,
+                              @Time         time
+AS
+    INSERT INTO Orders
+                (CateringTypeID,
+                 Date,
+                 Time)
+         VALUES (@CateringType,
+                 @Date,
+                 @Time);
 
 GO 
+
+--Add menu item to catering order
+CREATE PROCEDURE dbo.NewOrderItem
+  @OrderID  INT,
+  @MenuItem VARCHAR(40),
+  @Quantity INT
+AS
+  DECLARE @MenuItemID AS INT
+  SELECT @MenuItemID = ID
+  FROM   MenuItems
+  WHERE  ItemName LIKE '%' + @MenuItem + '%'
+  INSERT INTO OrderItems
+              (
+                          OrderID,
+                          MenuItemID,
+                          MenuItemQuantity
+              )
+              VALUES
+              (
+                          @OrderID,
+                          @MenuItemID,
+                          @Quantity
+              );
+			  
+GO
+CREATE OR ALTER PROCEDURE dbo.NewOrderItem
+  @OrderID  INT,
+  @MenuItem VARCHAR(40),
+  @Quantity INT
+AS
+  BEGIN
+    BEGIN TRY
+      SET NOCOUNT ON;
+      SET XACT_ABORT ON;
+      BEGIN TRANSACTION;
+      DECLARE @MenuItemID AS INT
+      SELECT @MenuItemID = ID
+      FROM   MenuItems
+      WHERE  ItemName LIKE '%' + @MenuItem + '%'
+      INSERT INTO OrderItems
+                  (
+                              OrderID,
+                              MenuItemID,
+                              MenuItemQuantity
+                  )
+                  VALUES
+                  (
+                              @OrderID,
+                              @MenuItemID,
+                              @Quantity
+                  );
+      
+      COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+      IF (@@TRANCOUNT > 0)
+      ROLLBACK TRANSACTION;
+      THROW;
+    END CATCH
+  END
+  GO
 
 --Weekly catering order sheet for week of yyyy-mm-dd
-CREATE VIEW ProductQuantitiesPerOrder
+
+--Change corresponding product for an ingredient
+
+--Delete order 
+CREATE PROCEDURE dbo.DeleteOrder @OrderID int
 AS
-  (SELECT p.ID,
-          ( ( o.NumberOfGuests / r.RecipeServings ) * i.IngredientQuantityOz ) /
-          p.ID AS
-          ProductQuantity,
-		  o.ReadyBy
-     FROM OrderItems os
-	      JOIN Orders o
-		    ON o.ID = os.OrderID
-          JOIN Recipes r
-            ON os.RecipeID = r.ID
-          JOIN Ingredients i
-            ON i.RecipeID = r.ID
-          JOIN Products p
-            ON p.ID = i.ProductID);
+    DELETE FROM OrderItems
+     WHERE OrderID = @OrderID
 
-GO 
-
-CREATE PROCEDURE WeeklyCateringOrderSheet @Date datetime
-AS
-    SELECT q.ProductQuantity,
-           p.ID,
-           p.ProductName,
-           p.ID
-      FROM Products p
-           JOIN ProductQuantitiesPerOrder q
-             ON p.ID = q.ProductQuantity
-     GROUP BY p.ID
-	HAVING q.ReadyBy BETWEEN @Date AND Dateadd(Day, 7, @Date)
-     ORDER BY VendorID; 
-
- GO 
-
- --Change corresponding product for an ingredient
-CREATE PROCEDURE UpdateProduct @NewProductID int,
-                               @OldProductID int
-AS
-    UPDATE MenuItemIngredients
-       SET ProductID = @NewProductID
-     WHERE ProductID = @OldProductID 
+    DELETE FROM Orders
+     WHERE ID = @OrderID; 
 
 GO
-
---Delete order
-CREATE PROCEDURE DeleteOrder @OrderID int
-AS
-    DELETE FROM Orders
-     WHERE ID = @OrderID
-
-GO 
