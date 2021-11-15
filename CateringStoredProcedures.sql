@@ -1,16 +1,9 @@
 USE Catering;
 
---Drop stored procedures
-DROP PROCEDURE IF EXISTS dbo.NewOrder;  
-GO 
+GO
 
-DROP PROCEDURE IF EXISTS dbo.NewOrderItem;  
-GO 
-
-DROP PROCEDURE IF EXISTS dbo.DeleteOrder;  
-GO 
 --Create new order in order table
-CREATE PROCEDURE dbo.NewOrder @CateringType int,
+CREATE OR ALTER PROCEDURE dbo.NewOrder @CateringType int,
                               @Date         date,
                               @Time         time
 AS
@@ -25,7 +18,7 @@ AS
 GO 
 
 --Add menu item to catering order
-CREATE PROCEDURE dbo.NewOrderItem
+CREATE OR ALTER PROCEDURE dbo.NewOrderItem
   @OrderID  INT,
   @MenuItem VARCHAR(40),
   @Quantity INT
@@ -48,6 +41,7 @@ AS
               );
 			  
 GO
+
 CREATE OR ALTER PROCEDURE dbo.NewOrderItem
   @OrderID  INT,
   @MenuItem VARCHAR(40),
@@ -61,7 +55,7 @@ AS
       DECLARE @MenuItemID AS INT
       SELECT @MenuItemID = ID
       FROM   MenuItems
-      WHERE  ItemName LIKE '%' + @MenuItem + '%'
+      WHERE  ItemName LIKE '%'@MenuItem + '%'
       INSERT INTO OrderItems
                   (
                               OrderID,

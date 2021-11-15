@@ -111,4 +111,39 @@ GO
 CREATE NONCLUSTERED INDEX MenuItemsIndex
     ON MenuItems (ItemName);
 
+--Create ingredients view
+SELECT p.ID,
+       p.ProductName,
+          ( ( o.NumberOfGuests / m.RecipeServings ) * mi.ProductQuantity ) / p.Quantity
+           AS
+          ProductQuantity,
+		  o.Date
+     FROM Orders o
+	      JOIN OrderItems i
+		    ON o.ID = i.OrderID
+          LEFT JOIN MenuItems m
+            ON i.MenuItemID = m.ID
+          LEFT JOIN MenuItemIngredients mi
+            ON m.ID = mi.MenuItemID
+          LEFT JOIN Products p
+            ON mi.ProductID = p.ID
 
+--Create disposables view
+SELECT o.ID,
+		p.ID,
+       p.ProductName,
+	   CASE
+           WHEN 
+           WHEN
+           ELSE 
+       END AS DisposableQuanity,
+	   o.Date
+  FROM Orders o
+       JOIN OrderItems i
+	     ON o.ID = i.OrderID
+	   LEFT JOIN MenuItems m
+         ON i.MenuItemID = m.ID
+       LEFT JOIN PackagingDisposables d
+	     ON m.PackagingTypeID = d.PackagingTypeID
+       LEFT JOIN Products p 
+	     ON d.ProductID = p.ID
