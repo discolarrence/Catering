@@ -1,12 +1,57 @@
-USE MASTER;
+/* PlayMyBeats-CreateDBObjects.sql
+ * Author: Laura Rountree
+ * Date Created: 11/15/2021
+ * Description: Catering app
+ *
+ * Tables:
+ *    Vendors (VendorName, Phone, Contact)
+ *    Products (ProductName, VendorID, VendorItemCode, Quantity, Unit)
+ *    CateringTypes (CateringType)
+ *    PackagingTypes (PackagingType)
+ *    CateringDisposables (CateringTypeID, ProductID)
+ *    PackagingDisposables (PackagingTypeID, CateringTypeID, ProductID, NumberOfGuestsPerEach)
+ *    MenuItems (ItemName, RecipeServings, PackagingTypeID)
+ *    MenuItemIngredients (MenuItemID, ProductID, ProductQuantity)
+ *    Orders (CateringType, NumberOfGuests, Date, Time)
+ *    OrderItems (OrderID, MenuItemID, MenuItemQuantity)
+ *
+ * Indexes:
+ *    MenuItems
+ *
+ * Views:
+ *    IngredientProductList(VendorName, VendorItemCode, ProductName, ProductQuantityNeeded, 
+ *                          CaseQuantityNeeded, Date, CaseQuantity, CaseUnit)
+ *    PackagingDisposablesProductList(VendorName, VendorItemCode, ProductName, ProductQuantityNeeded, 
+ *                                    CaseQuantityNeeded, Date, CaseQuantity, CaseUnit)
+ *    CateringDisposablesProductList(VendorName, VendorItemCode, ProductName, ProductQuantityNeeded, 
+ *                                    CaseQuantityNeeded, Date, CaseQuantity, CaseUnit)
+ *    AllDisposablesList(VendorName, VendorItemCode, ProductName, ProductQuantityNeeded, 
+ *                       CaseQuantityNeeded, Date, CaseQuantity, CaseUnit)
+ *    AllProductList(VendorName, VendorItemCode, ProductName, ProductQuantityNeeded, 
+ *                   CaseQuantityNeeded, Date, CaseQuantity, CaseUnit)
+ *    AllProductOrder(VendorName, VendorItemCode, ProductName, ProductQuantityNeeded, 
+ *                       CaseQuantityNeeded, Date, CaseQuantity, CaseUnit)
 
-GO
+ * Stored Procedures
+ *    NewOrderItem (@OrderID, @MenuItem, @Quantity)
+ *    CreateOrderSheet (@StartDate, @EndDate)
+ *    DeleteOrder (@OrderID)
+ *
+*/
 
+USE MASTER
+GO 
+
+--Create Database
 DROP DATABASE IF EXISTS Catering
 CREATE DATABASE Catering;
 
 USE Catering
 
+
+/******************************************************
+    Tables
+******************************************************/
 DROP TABLE IF EXISTS dbo.Vendors
 DROP TABLE IF EXISTS dbo.Products
 DROP TABLE IF EXISTS dbo.CateringTypes
@@ -107,12 +152,20 @@ CREATE TABLE dbo.OrderItems
 
 GO 
 
+
+/******************************************************
+    Index
+******************************************************/
 --Create product & recipe indexes
 CREATE NONCLUSTERED INDEX MenuItemsIndex
     ON MenuItems (ItemName);
 
 GO 
 
+
+/******************************************************
+    Views
+******************************************************/
 --Create ingredients view
  CREATE OR ALTER VIEW IngredientsProductList
  AS
@@ -258,5 +311,94 @@ SELECT VendorName,
 	   CaseQuantity,
 	   CaseUnit
   FROM CateringDisposablesProductList; 
+
+GO
+
+/******************************************************
+    Stored Procedures
+******************************************************/
+--Create new order in order table
+CREATE OR ALTER PROCEDURE dbo.NewOrderItem
+  @OrderID  INT,
+  @MenuItem VARCHAR(40),
+  @Quantity INT
+AS
+  BEGIN
+    BEGIN TRY
+      SET NOCOUNT ON;
+      SET XACT_ABORT ON;
+      BEGIN TRANSACTION;
+      
+	  IF (SELECT COUNT(*) FROM MenuItems WHERE ItemName LIKE '%' + @MenuItem + '%') > 1
+      THROW 50000, 'More than one menu item returned', 1
+
+	  IF (SELECT COUNT(*) FROM MenuItems WHERE ItemName LIKE '%' + @MenuItem + '%') = 0
+	  THROW 50001, 'No menu items returned', 1
+
+      DECLARE @MenuItemID AS INT
+       SELECT @MenuItemID = ID
+         FROM MenuItems
+        WHERE ItemName LIKE '%' + @MenuItem + '%'
+       INSERT INTO OrderItems
+              (OrderID,
+              MenuItemID,
+              MenuItemQuantity)
+       VALUES (@OrderID,
+              @MenuItemID,
+              @Quantity ); 
+      
+      COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+      IF (@@TRANCOUNT > 0)
+      ROLLBACK TRANSACTION;
+      THROW;
+    END CATCH
+  END
+
+  GO
+
+--Weekly catering order sheet for week of yyyy-mm-dd
+CREATE OR ALTER PROCEDURE dbo.CreateOrderSheet @StartDate date,
+                                               @EndDate date
+AS
+SELECT VendorName,
+       VendorItemCode,
+       ProductName,
+       SUM(ProductQuantityNeeded)                      AS ProductQuantityNeeded,
+       CEILING(SUM(CaseQuantityNeeded))                AS CaseQuantityNeeded,
+       CAST(SUM(CaseQuantityNeeded) AS DECIMAL(10, 2)) AS RawCaseQuantityNeeded,
+       CaseQuantity,
+       CaseUnit
+  FROM AllProductList
+ WHERE Date BETWEEN @StartDate AND @EndDate
+ GROUP BY ProductName,
+          VendorName,
+          VendorItemCode,
+          CaseQuantity,
+          CaseUnit
+ ORDER BY VendorName,
+          ProductName 
+
+GO
+
+--Change corresponding product for a packaging disposable
+CREATE OR ALTER PROCEDURE dbo.UpdateProduct @OldProductID int,
+											@NewProductID int
+AS
+UPDATE PackagingDisposables
+SET ProductID = @NewProductID
+WHERE ProductID = @OldProductID;
+
+GO
+
+--Delete order 
+CREATE OR ALTER PROCEDURE dbo.DeleteOrder @OrderID int
+AS
+    DELETE FROM OrderItems
+     WHERE OrderID = @OrderID
+
+    DELETE FROM Orders
+     WHERE ID = @OrderID; 
 
 GO

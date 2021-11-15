@@ -58,7 +58,8 @@ INSERT INTO Products
             ('Relish, Sweet Pickle',2,'72461',32,'oz.'),
             ('Ketchup',4,'48666',96,'oz.'),
             ('Eggs',3,'37131',60,'count'),
-            ('Napkin',4,'23856',1000,'count');
+            ('Napkin',4,'23856',1000,'count'),
+			('Napkin', 2, '49352', 1500, 'count');
 
 INSERT INTO CateringTypes
             (CateringType)
