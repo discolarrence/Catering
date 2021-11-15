@@ -111,39 +111,152 @@ GO
 CREATE NONCLUSTERED INDEX MenuItemsIndex
     ON MenuItems (ItemName);
 
---Create ingredients view
-SELECT p.ID,
-       p.ProductName,
-          ( ( o.NumberOfGuests / m.RecipeServings ) * mi.ProductQuantity ) / p.Quantity
-           AS
-          ProductQuantity,
-		  o.Date
-     FROM Orders o
-	      JOIN OrderItems i
-		    ON o.ID = i.OrderID
-          LEFT JOIN MenuItems m
-            ON i.MenuItemID = m.ID
-          LEFT JOIN MenuItemIngredients mi
-            ON m.ID = mi.MenuItemID
-          LEFT JOIN Products p
-            ON mi.ProductID = p.ID
+GO 
 
---Create disposables view
-SELECT o.ID,
-		p.ID,
+--Create ingredients view
+ CREATE OR ALTER VIEW IngredientsProductList
+ AS
+SELECT v.VendorName,
+       p.VendorItemCode,
        p.ProductName,
-	   CASE
-           WHEN 
-           WHEN
-           ELSE 
-       END AS DisposableQuanity,
-	   o.Date
+	   ( ( o.NumberOfGuests / m.RecipeServings ) * mi.ProductQuantity ) AS
+	   ProductQuantityNeeded,
+       ( ( o.NumberOfGuests / m.RecipeServings ) * mi.ProductQuantity ) /
+       p.Quantity AS
+       CaseQuantityNeeded,
+       o.Date,
+	   p.Quantity AS
+	   CaseQuantity,
+       p.Unit AS
+	   CaseUnit
   FROM Orders o
        JOIN OrderItems i
-	     ON o.ID = i.OrderID
-	   LEFT JOIN MenuItems m
-         ON i.MenuItemID = m.ID
+         ON o.ID = i.OrderID
+       LEFT JOIN MenuItems m
+              ON i.MenuItemID = m.ID
+       LEFT JOIN MenuItemIngredients mi
+              ON m.ID = mi.MenuItemID
+       LEFT JOIN Products p
+              ON mi.ProductID = p.ID
+       LEFT JOIN Vendors v
+              ON v.ID = p.VendorID; 
+
+GO
+
+--Create packaging disposables view
+ CREATE OR ALTER VIEW PackagingDisposablesProductList
+ AS
+SELECT v.VendorName,
+       p.VendorItemCode,
+       p.ProductName,
+	   CASE
+         WHEN d.NumberOfGuestsPerEach = 0 THEN 1
+         ELSE i.MenuItemQuantity / d.NumberOfGuestsPerEach 
+       END AS
+	   ProductQuantityNeeded,
+       CASE
+         WHEN d.NumberOfGuestsPerEach = 0 THEN 1 / p.Quantity
+         ELSE ( i.MenuItemQuantity / d.NumberOfGuestsPerEach ) / p.Quantity
+       END AS
+       CaseQuantityNeeded,
+       o.Date,
+	   p.Quantity AS
+	   CaseQuantity,
+       p.Unit AS
+	   CaseUnit
+  FROM Orders o
+       JOIN OrderItems i
+         ON o.ID = i.OrderID
+       LEFT JOIN MenuItems m
+              ON i.MenuItemID = m.ID
        LEFT JOIN PackagingDisposables d
-	     ON m.PackagingTypeID = d.PackagingTypeID
-       LEFT JOIN Products p 
-	     ON d.ProductID = p.ID
+              ON m.PackagingTypeID = d.PackagingTypeID
+       LEFT JOIN Products p
+              ON d.ProductID = p.ID
+       LEFT JOIN Vendors v
+              ON v.ID = p.VendorID
+ WHERE o.CateringTypeID = d.CateringTypeID; 
+
+ GO
+
+ --Create catering disposables view
+ CREATE OR ALTER VIEW CateringDisposablesProductList
+ AS
+SELECT v.VendorName,
+       p.VendorItemCode,
+       p.ProductName,
+	   o.NumberOfGuests AS ProductQuantityNeeded,
+       o.NumberOfGuests / p.Quantity AS CaseQuantityNeeded,
+       o.Date,
+	   p.Quantity AS
+	   CaseQuantity,
+       p.Unit AS
+	   CaseUnit
+  FROM Orders o
+       JOIN CateringDisposables c
+         ON o.CateringTypeID = c.CateringTypeID
+       LEFT JOIN Products p
+              ON p.ID = c.ProductID
+       LEFT JOIN Vendors v
+              ON v.ID = p.VendorID; 
+
+ GO
+
+ --Create all disposables view
+CREATE OR ALTER VIEW AllProductList
+ AS
+SELECT VendorName,
+       VendorItemCode,
+       ProductName,
+       ProductQuantityNeeded,
+	   CaseQuantityNeeded,
+       Date,
+	   CaseQuantity,
+	   CaseUnit
+  FROM PackagingDisposablesProductList
+UNION ALL
+SELECT VendorName,
+       VendorItemCode,
+       ProductName,
+	   ProductQuantityNeeded,
+	   CaseQuantityNeeded,
+       Date,
+	   CaseQuantity,
+	   CaseUnit
+  FROM CateringDisposablesProductList; 
+
+GO
+ --Create all product view
+ CREATE OR ALTER VIEW AllProductList
+ AS
+SELECT VendorName,
+       VendorItemCode,
+       ProductName,
+       ProductQuantityNeeded,
+	   CaseQuantityNeeded,
+       Date,
+	   CaseQuantity,
+	   CaseUnit
+  FROM IngredientsProductList
+UNION ALL
+SELECT VendorName,
+       VendorItemCode,
+       ProductName,
+       ProductQuantityNeeded,
+	   CaseQuantityNeeded,
+       Date,
+	   CaseQuantity,
+	   CaseUnit
+  FROM PackagingDisposablesProductList
+UNION ALL
+SELECT VendorName,
+       VendorItemCode,
+       ProductName,
+       ProductQuantityNeeded,
+	   CaseQuantityNeeded,
+       Date,
+	   CaseQuantity,
+	   CaseUnit
+  FROM CateringDisposablesProductList; 
+
+GO
