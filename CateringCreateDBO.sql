@@ -1,4 +1,4 @@
-/* PlayMyBeats-CreateDBObjects.sql
+/* CateringCreateDBO.sql
  * Author: Laura Rountree
  * Date Created: 11/15/2021
  * Description: Catering app
@@ -12,11 +12,12 @@
  *    PackagingDisposables (PackagingTypeID, CateringTypeID, ProductID, NumberOfGuestsPerEach)
  *    MenuItems (ItemName, RecipeServings, PackagingTypeID)
  *    MenuItemIngredients (MenuItemID, ProductID, ProductQuantity)
- *    Orders (CateringType, NumberOfGuests, Date, Time)
+ *    Orders (OrderName, CateringType, NumberOfGuests, Date, Time)
  *    OrderItems (OrderID, MenuItemID, MenuItemQuantity)
  *
  * Indexes:
  *    MenuItems
+ *    OrderNames
  *
  * Views:
  *    IngredientProductList(VendorName, VendorItemCode, ProductName, ProductQuantityNeeded, 
@@ -29,13 +30,16 @@
  *                       CaseQuantityNeeded, Date, CaseQuantity, CaseUnit)
  *    AllProductList(VendorName, VendorItemCode, ProductName, ProductQuantityNeeded, 
  *                   CaseQuantityNeeded, Date, CaseQuantity, CaseUnit)
- *    AllProductOrder(VendorName, VendorItemCode, ProductName, ProductQuantityNeeded, 
- *                       CaseQuantityNeeded, Date, CaseQuantity, CaseUnit)
 
  * Stored Procedures
  *    NewOrderItem (@OrderID, @MenuItem, @Quantity)
  *    CreateOrderSheet (@StartDate, @EndDate)
- *    DeleteOrder (@OrderID)
+ *    CreateDisposablesOrderSheet (@StartDate, @EndDate)
+ *    UpdatePackagingProduct (@OldProductID, @NewProductID)
+ *    UpdateCateringProduct (@OldProductID, @NewProductID)
+ *    UpdateIngredientProduct (@OldProductID, @NewProductID)
+ *    DeleteOrderByID (@OrderID)
+ *    DeleteOrderByName (@OrderName)
  *
 */
 
@@ -78,7 +82,7 @@ CREATE TABLE dbo.Products
      [VendorID]       int NOT NULL,
      [VendorItemCode] varchar(40) NOT NULL,
      [Quantity]       decimal(10, 2) NOT NULL,
-     [Unit]           varchar(10),
+     [Unit]           varchar(10) NOT NULL,
      FOREIGN KEY(VendorID) REFERENCES Vendors(ID)
   )
 
@@ -134,6 +138,7 @@ CREATE TABLE dbo.MenuItemIngredients
 CREATE TABLE dbo.Orders
   (
      [ID]             int NOT NULL IDENTITY PRIMARY KEY,
+	 [OrderName]      varchar(100) NOT NULL,
      [CateringTypeID] int NOT NULL,
      [NumberOfGuests] int NOT NULL,
      [Date]           date NOT NULL,
@@ -152,16 +157,20 @@ CREATE TABLE dbo.OrderItems
 
 GO 
 
-
 /******************************************************
     Index
 ******************************************************/
---Create product & recipe indexes
+--Create menu item and order name indexes
+DROP INDEX IF EXISTS MenuItemsIndex ON dbo.MenuItems;
+DROP INDEX IF EXISTS OrderNames ON dbo.OrderNames;
+
 CREATE NONCLUSTERED INDEX MenuItemsIndex
     ON MenuItems (ItemName);
 
-GO 
+CREATE NONCLUSTERED INDEX OrderNames
+    ON Orders (OrderName);
 
+GO 
 
 /******************************************************
     Views
@@ -256,7 +265,7 @@ SELECT v.VendorName,
  GO
 
  --Create all disposables view
-CREATE OR ALTER VIEW AllProductList
+CREATE OR ALTER VIEW AllDisposablesProductList
  AS
 SELECT VendorName,
        VendorItemCode,
@@ -323,12 +332,6 @@ CREATE OR ALTER PROCEDURE dbo.NewOrderItem
   @MenuItem VARCHAR(40),
   @Quantity INT
 AS
-  BEGIN
-    BEGIN TRY
-      SET NOCOUNT ON;
-      SET XACT_ABORT ON;
-      BEGIN TRANSACTION;
-      
 	  IF (SELECT COUNT(*) FROM MenuItems WHERE ItemName LIKE '%' + @MenuItem + '%') > 1
       THROW 50000, 'More than one menu item returned', 1
 
@@ -339,26 +342,18 @@ AS
        SELECT @MenuItemID = ID
          FROM MenuItems
         WHERE ItemName LIKE '%' + @MenuItem + '%'
+
        INSERT INTO OrderItems
               (OrderID,
               MenuItemID,
               MenuItemQuantity)
        VALUES (@OrderID,
               @MenuItemID,
-              @Quantity ); 
-      
-      COMMIT TRANSACTION;
-    END TRY
-    BEGIN CATCH
-      IF (@@TRANCOUNT > 0)
-      ROLLBACK TRANSACTION;
-      THROW;
-    END CATCH
-  END
-
+              @Quantity); 
+  
   GO
 
---Weekly catering order sheet for week of yyyy-mm-dd
+--Create supply order sheet based on catering orders for a specified time period
 CREATE OR ALTER PROCEDURE dbo.CreateOrderSheet @StartDate date,
                                                @EndDate date
 AS
@@ -382,9 +377,33 @@ SELECT VendorName,
 
 GO
 
+--Create disposables order sheet based on catering orders for a specified time period
+CREATE OR ALTER PROCEDURE dbo.CreateDisposablesOrderSheet @StartDate date,
+                                                          @EndDate date
+AS
+SELECT VendorName,
+       VendorItemCode,
+       ProductName,
+       SUM(ProductQuantityNeeded)                      AS ProductQuantityNeeded,
+       CEILING(SUM(CaseQuantityNeeded))                AS CaseQuantityNeeded,
+       CAST(SUM(CaseQuantityNeeded) AS DECIMAL(10, 2)) AS RawCaseQuantityNeeded,
+       CaseQuantity,
+       CaseUnit
+  FROM AllDisposablesProductList
+ WHERE Date BETWEEN @StartDate AND @EndDate
+ GROUP BY ProductName,
+          VendorName,
+          VendorItemCode,
+          CaseQuantity,
+          CaseUnit
+ ORDER BY VendorName,
+          ProductName 
+
+GO
+
 --Change corresponding product for a packaging disposable
-CREATE OR ALTER PROCEDURE dbo.UpdateProduct @OldProductID int,
-											@NewProductID int
+CREATE OR ALTER PROCEDURE dbo.UpdatePackagingProduct @OldProductID int,
+											         @NewProductID int
 AS
 UPDATE PackagingDisposables
 SET ProductID = @NewProductID
@@ -392,9 +411,51 @@ WHERE ProductID = @OldProductID;
 
 GO
 
---Delete order 
-CREATE OR ALTER PROCEDURE dbo.DeleteOrder @OrderID int
+--Change corresponding product for a catering disposable
+CREATE OR ALTER PROCEDURE dbo.UpdateCateringProduct @OldProductID int,
+											        @NewProductID int
 AS
+UPDATE CateringDisposables
+SET ProductID = @NewProductID
+WHERE ProductID = @OldProductID;
+
+GO
+
+--Change corresponding product for an ingredient
+CREATE OR ALTER PROCEDURE dbo.UpdateIngredientProduct @OldProductID int,
+											          @NewProductID int
+AS
+UPDATE MenuItemIngredients
+SET ProductID = @NewProductID
+WHERE ProductID = @OldProductID;
+
+GO
+
+--Delete order by order ID
+CREATE OR ALTER PROCEDURE dbo.DeleteOrderByID @OrderID int
+AS
+    DELETE FROM OrderItems
+     WHERE OrderID = @OrderID
+
+    DELETE FROM Orders
+     WHERE ID = @OrderID; 
+
+GO
+
+--Delete order by order name
+CREATE OR ALTER PROCEDURE dbo.DeleteOrderByName @OrderName varchar(40)
+AS
+   IF (SELECT COUNT(*) FROM Orders WHERE OrderName LIKE '%' + @OrderName + '%') > 1
+   THROW 50002, 'More than one name returned', 1
+
+   IF (SELECT COUNT(*) FROM Orders WHERE OrderName LIKE '%' + @OrderName + '%') = 0
+   THROW 50003, 'No names returned', 1
+
+   DECLARE @OrderID AS INT
+    SELECT @OrderID = ID
+      FROM Orders
+     WHERE OrderName LIKE '%' + @OrderName + '%'
+
     DELETE FROM OrderItems
      WHERE OrderID = @OrderID
 

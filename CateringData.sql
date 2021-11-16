@@ -59,7 +59,9 @@ INSERT INTO Products
             ('Ketchup',4,'48666',96,'oz.'),
             ('Eggs',3,'37131',60,'count'),
             ('Napkin',4,'23856',1000,'count'),
-			('Napkin', 2, '49352', 1500, 'count');
+			('Napkin', 2, '49352', 1500, 'count'),
+			('Deli Paper, 10.5 x 12', 2, '34724', 1000, 'count'),
+			('Mayonnaise, Dukes', 4, '25839', 128, 'fl.oz.');
 
 INSERT INTO CateringTypes
             (CateringType)
@@ -185,12 +187,12 @@ INSERT INTO MenuItemIngredients
             (11,31,10);
 
 INSERT INTO Orders
-            (CateringTypeID,NumberOfGuests,Date,Time)
-     VALUES (2,100,'2021-11-30','18:00'),
-            (1,30,'2021-12-02','12:00'),
-            (2,150,'2021-12-02','16:30'),
-            (2,75,'2021-12-15','17:30'),
-            (1,15,'2021-11-29','13:00');
+            (OrderName,CateringTypeID,NumberOfGuests,Date,Time)
+     VALUES ('Woodford',2,100,'2021-11-30','18:00'),
+            ('Ramirez',1,30,'2021-12-02','12:00'),
+            ('Brown',2,150,'2021-12-02','16:30'),
+            ('Norton',2,75,'2021-12-15','17:30'),
+            ('Burgess',1,15,'2021-11-29','13:00');
 
 INSERT INTO OrderItems
             (OrderID,MenuItemID,MenuItemQuantity)
