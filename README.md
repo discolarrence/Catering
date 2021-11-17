@@ -7,7 +7,7 @@ This repository is an example project for the [Code Louisville](https://www.code
 
 **Catering**
 
-Catering is a database created to assist chefs/kitchen managers in ordering supplies based on catering orders. The main purpose is to generate a supply needs list to use for ordering, on its own or combined with a restaurant par list and chacked against inventory to generate an order sheet.
+Catering is a database created to assist chefs/kitchen managers in ordering supplies based on catering orders. It was built to address a problem I had as a restaurant chef. I generated a weekly order for the restaurant by checking inventory against par lists, but my order for supplies needed for catering orders (which often included items not on the regular menu) were calculated by hand and often included time-consuming searches through vendor catalogs. The main purpose is to maintain a database of all products associated with the catering menu and generate a supply needs list, either on its own or combined with a restaurant par list and checked against inventory to generate an order sheet.
 
 ## Features
 
