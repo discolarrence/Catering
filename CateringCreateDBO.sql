@@ -35,9 +35,7 @@
  *    NewOrderItem (@OrderID, @MenuItem, @Quantity)
  *    CreateOrderSheet (@StartDate, @EndDate)
  *    CreateDisposablesOrderSheet (@StartDate, @EndDate)
- *    UpdatePackagingProduct (@OldProductID, @NewProductID)
- *    UpdateCateringProduct (@OldProductID, @NewProductID)
- *    UpdateIngredientProduct (@OldProductID, @NewProductID)
+ *    UpdateProduct (@OldProductID, @NewProductID, @ProductType)
  *    DeleteOrderByID (@OrderID)
  *    DeleteOrderByName (@OrderName)
  *
@@ -436,63 +434,37 @@ AS
 GO
 
 /** 
-    Stored Procedure: UpdatePackagingProduct 
+    Stored Procedure: UpdateProduct 
     Usage: Change corresponding product for a packaging disposable
     Parameters:
        @OldProductID--ID of product being replaced
        @NewProductID--ID of replacement product
+	   @ProductType-Product type
     Returns:
        None
     Error Checks:
-      None
+      Product will not be updated if product type is not packaging, catering, or ingredient
 **/
-CREATE OR ALTER PROCEDURE dbo.UpdatePackagingProduct @OldProductID int,
-                                                     @NewProductID int
+CREATE OR ALTER PROCEDURE dbo.UpdateProduct @OldProductID int,
+                                            @NewProductID int,
+                                            @ProductType  varchar(40)
 AS
-    UPDATE PackagingDisposables
-       SET ProductID = @NewProductID
-     WHERE ProductID = @OldProductID;
+    IF @ProductType LIKE '%packaging%'
+      UPDATE PackagingDisposables
+         SET ProductID = @NewProductID
+       WHERE ProductID = @OldProductID;
 
-GO
+    IF @ProductType LIKE '%catering%'
+      UPDATE CateringDisposables
+         SET ProductID = @NewProductID
+       WHERE ProductID = @OldProductID;
 
-/** 
-    Stored Procedure: UpdateCateringProduct 
-    Usage: Change corresponding product for a catering disposable
-    Parameters:
-       @OldProductID--ID of product being replaced
-       @NewProductID--ID of replacement product
-    Returns:
-       None
-    Error Checks:
-      None
-**/
-CREATE OR ALTER PROCEDURE dbo.UpdateCateringProduct @OldProductID int,
-                                                    @NewProductID int
-AS
-    UPDATE CateringDisposables
-       SET ProductID = @NewProductID
-     WHERE ProductID = @OldProductID;
-
-GO
-
-/** 
-    Stored Procedure: UpdateIngredientProduct 
-    Usage: Change corresponding product for an ingredient
-    Parameters:
-       @OldProductID--ID of product being replaced
-       @NewProductID--ID of replacement product
-    Returns:
-       None
-    Error Checks:
-      None
-**/
-CREATE OR ALTER PROCEDURE dbo.UpdateIngredientProduct @OldProductID int,
-                                                      @NewProductID int
-AS
-    UPDATE MenuItemIngredients
-       SET ProductID = @NewProductID
-     WHERE ProductID = @OldProductID; 
-
+    IF @ProductType LIKE '%ingredient%'
+      UPDATE MenuItemIngredients
+         SET ProductID = @NewProductID
+       WHERE ProductID = @OldProductID;
+    ELSE
+      THROW 50006, 'product type must be packaging, catering or ingredients', 1 
 GO
 
 /** 
