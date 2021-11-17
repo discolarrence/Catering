@@ -78,6 +78,7 @@ CREATE TABLE dbo.Products
      [VendorItemCode] varchar(40) NOT NULL,
      [Quantity]       decimal(10, 2) NOT NULL,
      [Unit]           varchar(10) NOT NULL,
+	 [ProductType]    int NOT NULL
      FOREIGN KEY(VendorID) REFERENCES Vendors(ID)
   )
 
@@ -187,16 +188,16 @@ SELECT v.VendorName,
        p.Unit AS
 	   CaseUnit
   FROM Orders o
-       JOIN OrderItems i
-         ON o.ID = i.OrderID
-       LEFT JOIN MenuItems m
-              ON i.MenuItemID = m.ID
-       LEFT JOIN MenuItemIngredients mi
-              ON m.ID = mi.MenuItemID
-       LEFT JOIN Products p
-              ON mi.ProductID = p.ID
-       LEFT JOIN Vendors v
-              ON v.ID = p.VendorID; 
+       INNER JOIN OrderItems i
+               ON o.ID = i.OrderID
+        LEFT JOIN MenuItems m
+               ON i.MenuItemID = m.ID
+        LEFT JOIN MenuItemIngredients mi
+               ON m.ID = mi.MenuItemID
+        LEFT JOIN Products p
+               ON mi.ProductID = p.ID
+        LEFT JOIN Vendors v
+               ON v.ID = p.VendorID; 
 
 GO
 
@@ -222,16 +223,16 @@ SELECT v.VendorName,
        p.Unit AS
 	   CaseUnit
   FROM Orders o
-       JOIN OrderItems i
-         ON o.ID = i.OrderID
-       LEFT JOIN MenuItems m
-              ON i.MenuItemID = m.ID
-       LEFT JOIN PackagingDisposables d
-              ON m.PackagingTypeID = d.PackagingTypeID
-       LEFT JOIN Products p
-              ON d.ProductID = p.ID
-       LEFT JOIN Vendors v
-              ON v.ID = p.VendorID
+       INNER JOIN OrderItems i
+               ON o.ID = i.OrderID
+        LEFT JOIN MenuItems m
+               ON i.MenuItemID = m.ID
+        LEFT JOIN PackagingDisposables d
+               ON m.PackagingTypeID = d.PackagingTypeID
+        LEFT JOIN Products p
+               ON d.ProductID = p.ID
+        LEFT JOIN Vendors v
+               ON v.ID = p.VendorID
  WHERE o.CateringTypeID = d.CateringTypeID; 
 
  GO
@@ -250,11 +251,11 @@ SELECT v.VendorName,
        p.Unit AS
 	   CaseUnit
   FROM Orders o
-       JOIN CateringDisposables c
-         ON o.CateringTypeID = c.CateringTypeID
-       LEFT JOIN Products p
-              ON p.ID = c.ProductID
-       LEFT JOIN Vendors v
+       INNER JOIN CateringDisposables c
+               ON o.CateringTypeID = c.CateringTypeID
+        LEFT JOIN Products p
+               ON p.ID = c.ProductID
+        LEFT JOIN Vendors v
               ON v.ID = p.VendorID; 
 
  GO
@@ -466,20 +467,26 @@ AS
         OR @NewProductType IS NULL
       THROW 50008, 'Product ID does not exist.', 1
 
-    IF @NewProductType = 2
-      UPDATE PackagingDisposables
-         SET ProductID = @NewProductID
-       WHERE ProductID = @OldProductID;
-
-    IF @NewProductType = 3
-      UPDATE CateringDisposables
-         SET ProductID = @NewProductID
-       WHERE ProductID = @OldProductID;
-
-    IF @NewProductType = 1
+	IF @NewProductType = 1
+	BEGIN
       UPDATE MenuItemIngredients
          SET ProductID = @NewProductID
        WHERE ProductID = @OldProductID;
+	END
+
+    IF @NewProductType = 2
+	BEGIN
+      UPDATE PackagingDisposables
+         SET ProductID = @NewProductID
+       WHERE ProductID = @OldProductID;
+    END
+
+    IF @NewProductType = 3
+	BEGIN
+      UPDATE CateringDisposables
+         SET ProductID = @NewProductID
+       WHERE ProductID = @OldProductID;
+	END;
 
 GO 
 

@@ -11,16 +11,16 @@ EXEC dbo.CreateDisposablesOrderSheet '2021-11-15', '2021-12-01'
 EXEC dbo.CreateOrderSheet '2021-11-20', '2021-12-05'
 
 --Change corresponding product for a packaging disposable
-EXEC dbo.UpdatePackagingProduct 47, 48
+EXEC dbo.UpdateProduct 47, 48
 
 --Change corresponding product for a catering disposable
-EXEC dbo.UpdateCateringProduct 21, 49
+EXEC dbo.UpdateProduct 21, 49
 
 --Change corresponding product for an ingredients
-EXEC dbo.UpdateIngredientProduct 35, 50
+EXEC dbo.UpdateProduct 35, 50
 
 --Delete order by ID
-EXEC dbo.DeleteOrderByName 3
+EXEC dbo.DeleteOrderByID 3
 
 --Delete order by name
-EXEC dbo.DeleteOrderByName 'Brown'
+EXEC dbo.DeleteOrderByName 'Norton'

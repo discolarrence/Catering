@@ -7,16 +7,12 @@ This repository is an example project for the [Code Louisville](https://www.code
 
 **Catering**
 
-Catering is a database created to assist chefs/kitchen managers in ordering supplies based on catering orders.
+Catering is a database created to assist chefs/kitchen managers in ordering supplies based on catering orders. The main purpose is to generate a supply needs list to use for ordering, on its own or combined with a restaurant par list and chacked against inventory to generate an order sheet.
 
 ## Features
 
-- Add item to order
-- Produce list of weekly catering product needs
-- Produce list of disposables needed
-- Update products used for ingredients & disposables
-- Delete orders in database
-
+- Produce lists of supply needs based on catering orders
+- Update products used for each ingredient/disposable
 
 ## User Instructions
 
@@ -34,7 +30,7 @@ Catering is a database created to assist chefs/kitchen managers in ordering supp
 - Requires MS SQL Server
 - Execute the CateringCreateDBO.sql script to create the database objects
 - Execute the CateringData.sql script to load the sample data
-- Execute sample commands in CateringStoredProcedures.sql
+- CateringSampleCommands.sql has example commands to show how to use stored procedures
 
 ## Project Requirements
 
