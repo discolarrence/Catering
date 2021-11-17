@@ -7,38 +7,40 @@ This repository is an example project for the [Code Louisville](https://www.code
 
 **Catering**
 
-Catering is a database created to assist chefs in ordering supplies based on catering orders.
+Catering is a database created to assist chefs/kitchen managers in ordering supplies based on catering orders.
 
 ## Features
 
+- Add item to order
 - Produce list of weekly catering product needs
 - Produce list of disposables needed
-- Update product used in recipes
-- Create & delete order in database
+- Update products used for ingredients & disposables
+- Delete orders in database
 
 
 ## User Instructions
 
 | Feature | Command |
 | ----------- | ----------- |
-| Create Catering Supplies List For One Week | WeeklyCateringOrderSheet @Date = "day one" |
+| Create All Catering Supplies Needed List For Specified Time Period| CreateOrderSheet @StartDate=="day one of time period, @EndDate="last day of time period" |
+| Create Disposables Supplies Needed List For Specified Time Period| CreateDisposablesOrderSheet @StartDate=="day one of time period, @EndDate="last day of time period" |
 | Change Product Used In Ingredients List | UpdateProduct @NewProductID = "new product ID" , @OldProductID = "old product ID" |
-| Delete Order | DeleteOrder @OrderID = "order ID" |
-| Create Order |                      |
+| Delete Order By ID| DeleteOrderByID @OrderID = "order ID" |
+| Delete Order By Name| DeleteOrderByName @OrderName = "order name" |
+| Add Item To Order| NewOrderItem @OrderID = "order ID", @MenuItem = "menu item", @Quantity = "menu item quantity needed"|                    |
 
 ## Technical Instructions
 
 - Requires MS SQL Server
 - Execute the CateringCreateDBO.sql script to create the database objects
 - Execute the CateringData.sql script to load the sample data
+- Execute sample commands in CateringStoredProcedures.sql
 
 ## Project Requirements
 
 **Group 1: Reading Data from a Database**
 
 - Write a SELECT query that uses a WHERE clause.
-- Write a  SELECT query that uses an OR and an AND operator.
-- Write a  SELECT query that filters NULL rows using IS NOT NULL.
 - Write a  SELECT query that utilizes a JOIN.
 - Write a  SELECT query that utilizes a JOIN with 3 or more tables.
 - Write a  SELECT query that utilizes a LEFT JOIN.
@@ -47,9 +49,6 @@ Catering is a database created to assist chefs in ordering supplies based on cat
 - Write a  SELECT query that utilizes a GROUP BY clause along with an aggregate function.
 - Write a SELECT query that utilizes a CALCULATED FIELD.
 - Write a SELECT query that utilizes a SUBQUERY.
-- Write a SELECT query that utilizes a JOIN, at least 2 OPERATORS (AND, OR, =, IN, BETWEEN, ETC) AND A GROUP BY clause with an aggregate function.
-- Write a SELECT query that utilizes a JOIN with 3 or more tables, at 2 OPERATORS (AND, OR, =, IN, BETWEEN, ETC), a GROUP BY clause with an aggregate function, and a HAVING clause.
-
 
 **Group 2: Updating/Deleting Data from a Database**
 
