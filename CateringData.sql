@@ -1,8 +1,10 @@
-USE Catering;
+/* CateringData.sql
+ * Author: Laura Rontree
+ * Date Created: 11/15/2021
+ * Description: sample data for catering order app
+*/
 
-GO
 
---Insert Data
 INSERT INTO Vendors
             (VendorName,Phone,Contact)
      VALUES ('Creation Gardens','502-555-1234','William'),

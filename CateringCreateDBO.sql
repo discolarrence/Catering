@@ -43,9 +43,6 @@
  *
 */
 
-USE MASTER
-GO 
-
 --Create Database
 DROP DATABASE IF EXISTS Catering
 CREATE DATABASE Catering;
@@ -176,8 +173,8 @@ GO
     Views
 ******************************************************/
 --Create ingredients view
- CREATE OR ALTER VIEW IngredientsProductList
- AS
+CREATE OR ALTER VIEW IngredientsProductList
+AS
 SELECT v.VendorName,
        p.VendorItemCode,
        p.ProductName,
@@ -206,8 +203,8 @@ SELECT v.VendorName,
 GO
 
 --Create packaging disposables view
- CREATE OR ALTER VIEW PackagingDisposablesProductList
- AS
+CREATE OR ALTER VIEW PackagingDisposablesProductList
+AS
 SELECT v.VendorName,
        p.VendorItemCode,
        p.ProductName,
@@ -242,8 +239,8 @@ SELECT v.VendorName,
  GO
 
  --Create catering disposables view
- CREATE OR ALTER VIEW CateringDisposablesProductList
- AS
+CREATE OR ALTER VIEW CateringDisposablesProductList
+AS
 SELECT v.VendorName,
        p.VendorItemCode,
        p.ProductName,
@@ -266,7 +263,7 @@ SELECT v.VendorName,
 
  --Create all disposables view
 CREATE OR ALTER VIEW AllDisposablesProductList
- AS
+AS
 SELECT VendorName,
        VendorItemCode,
        ProductName,
@@ -289,8 +286,8 @@ SELECT VendorName,
 
 GO
  --Create all product view
- CREATE OR ALTER VIEW AllProductList
- AS
+CREATE OR ALTER VIEW AllProductList
+AS
 SELECT VendorName,
        VendorItemCode,
        ProductName,
@@ -326,140 +323,267 @@ GO
 /******************************************************
     Stored Procedures
 ******************************************************/
---Create new order in order table
-CREATE OR ALTER PROCEDURE dbo.NewOrderItem
-  @OrderID  INT,
-  @MenuItem VARCHAR(40),
-  @Quantity INT
+/** 
+    Stored Procedure: NewOrderItem 
+    Usage: Creates a new order item in order item table
+    Parameters:
+       @OrderID--Corresponding order ID
+       @MenuItem--Name of menu item
+       @Quantity--Quantity of menu item needed
+    Returns:
+       None
+    Error Checks:
+       Can't add item if @MenuItem input refers to multiple or no menu items.
+**/
+CREATE OR ALTER PROCEDURE dbo.NewOrderItem @OrderID  INT,
+                                           @MenuItem VARCHAR(40),
+                                           @Quantity INT
 AS
-	  IF (SELECT COUNT(*) FROM MenuItems WHERE ItemName LIKE '%' + @MenuItem + '%') > 1
+    IF (SELECT Count(*)
+          FROM MenuItems
+         WHERE ItemName LIKE '%' + @MenuItem + '%') > 1
       THROW 50000, 'More than one menu item returned', 1
 
-	  IF (SELECT COUNT(*) FROM MenuItems WHERE ItemName LIKE '%' + @MenuItem + '%') = 0
-	  THROW 50001, 'No menu items returned', 1
+    IF (SELECT Count(*)
+          FROM MenuItems
+         WHERE ItemName LIKE '%' + @MenuItem + '%') = 0
+      THROW 50001, 'No menu items returned', 1
 
-      DECLARE @MenuItemID AS INT
-       SELECT @MenuItemID = ID
-         FROM MenuItems
-        WHERE ItemName LIKE '%' + @MenuItem + '%'
+    DECLARE @MenuItemID AS INT
 
-       INSERT INTO OrderItems
-              (OrderID,
-              MenuItemID,
-              MenuItemQuantity)
-       VALUES (@OrderID,
-              @MenuItemID,
-              @Quantity); 
+    SELECT @MenuItemID = ID
+      FROM MenuItems
+     WHERE ItemName LIKE '%' + @MenuItem + '%'
+
+    INSERT INTO OrderItems
+                (OrderID,
+                 MenuItemID,
+                 MenuItemQuantity)
+         VALUES (@OrderID,
+                 @MenuItemID,
+                 @Quantity);
   
-  GO
+GO
 
---Create supply order sheet based on catering orders for a specified time period
+/** 
+    Stored Procedure: CreateOrderSheet 
+    Usage: Create supply order sheet based on catering orders for a specified time period 
+    Parameters:
+       @StartDate--first day of order period
+       @EndDate--last day of order period
+    Returns:
+       Result Set: VendorName, VendorItemCode, ProductName, ProductQuantityNeeded, 
+	   CaseQuantityNeeded, RawCaseQuantityNeeded, CaseQuantity, CaseUnit
+    Error Checks:
+       None
+**/
 CREATE OR ALTER PROCEDURE dbo.CreateOrderSheet @StartDate date,
-                                               @EndDate date
+                                               @EndDate   date
 AS
-SELECT VendorName,
-       VendorItemCode,
-       ProductName,
-       SUM(ProductQuantityNeeded)                      AS ProductQuantityNeeded,
-       CEILING(SUM(CaseQuantityNeeded))                AS CaseQuantityNeeded,
-       CAST(SUM(CaseQuantityNeeded) AS DECIMAL(10, 2)) AS RawCaseQuantityNeeded,
-       CaseQuantity,
-       CaseUnit
-  FROM AllProductList
- WHERE Date BETWEEN @StartDate AND @EndDate
- GROUP BY ProductName,
-          VendorName,
-          VendorItemCode,
-          CaseQuantity,
-          CaseUnit
- ORDER BY VendorName,
-          ProductName 
+    SELECT VendorName,
+           VendorItemCode,
+           ProductName,
+           Sum(ProductQuantityNeeded)                      AS ProductQuantityNeeded,
+           Ceiling(Sum(CaseQuantityNeeded))                AS CaseQuantityNeeded,
+           Cast(Sum(CaseQuantityNeeded) AS DECIMAL(10, 2)) AS RawCaseQuantityNeeded,
+           CaseQuantity,
+           CaseUnit
+      FROM AllProductList
+     WHERE Date BETWEEN @StartDate AND @EndDate
+     GROUP BY ProductName,
+              VendorName,
+              VendorItemCode,
+              CaseQuantity,
+              CaseUnit
+     ORDER BY VendorName,
+              ProductName
 
 GO
 
---Create disposables order sheet based on catering orders for a specified time period
+/** 
+    Stored Procedure: CreateDisposablesOrderSheet 
+    Usage: Create supply order sheet based on catering orders for a specified time period 
+    Parameters:
+       @StartDate--first day of order period
+       @EndDate--last day of order period
+    Returns:
+       Result Set: VendorName, VendorItemCode, ProductName, ProductQuantityNeeded, 
+	   CaseQuantityNeeded, RawCaseQuantityNeeded, CaseQuantity, CaseUnit
+    Error Checks:
+       None
+**/
 CREATE OR ALTER PROCEDURE dbo.CreateDisposablesOrderSheet @StartDate date,
-                                                          @EndDate date
+                                                          @EndDate   date
 AS
-SELECT VendorName,
-       VendorItemCode,
-       ProductName,
-       SUM(ProductQuantityNeeded)                      AS ProductQuantityNeeded,
-       CEILING(SUM(CaseQuantityNeeded))                AS CaseQuantityNeeded,
-       CAST(SUM(CaseQuantityNeeded) AS DECIMAL(10, 2)) AS RawCaseQuantityNeeded,
-       CaseQuantity,
-       CaseUnit
-  FROM AllDisposablesProductList
- WHERE Date BETWEEN @StartDate AND @EndDate
- GROUP BY ProductName,
-          VendorName,
-          VendorItemCode,
-          CaseQuantity,
-          CaseUnit
- ORDER BY VendorName,
-          ProductName 
+    SELECT VendorName,
+           VendorItemCode,
+           ProductName,
+           Sum(ProductQuantityNeeded)                      AS ProductQuantityNeeded,
+           Ceiling(Sum(CaseQuantityNeeded))                AS CaseQuantityNeeded,
+           Cast(Sum(CaseQuantityNeeded) AS DECIMAL(10, 2)) AS RawCaseQuantityNeeded,
+           CaseQuantity,
+           CaseUnit
+      FROM AllDisposablesProductList
+     WHERE Date BETWEEN @StartDate AND @EndDate
+     GROUP BY ProductName,
+              VendorName,
+              VendorItemCode,
+              CaseQuantity,
+              CaseUnit
+     ORDER BY VendorName,
+              ProductName 
 
 GO
 
---Change corresponding product for a packaging disposable
+/** 
+    Stored Procedure: UpdatePackagingProduct 
+    Usage: Change corresponding product for a packaging disposable
+    Parameters:
+       @OldProductID--ID of product being replaced
+       @NewProductID--ID of replacement product
+    Returns:
+       None
+    Error Checks:
+      None
+**/
 CREATE OR ALTER PROCEDURE dbo.UpdatePackagingProduct @OldProductID int,
-											         @NewProductID int
+                                                     @NewProductID int
 AS
-UPDATE PackagingDisposables
-SET ProductID = @NewProductID
-WHERE ProductID = @OldProductID;
+    UPDATE PackagingDisposables
+       SET ProductID = @NewProductID
+     WHERE ProductID = @OldProductID;
 
 GO
 
---Change corresponding product for a catering disposable
+/** 
+    Stored Procedure: UpdateCateringProduct 
+    Usage: Change corresponding product for a catering disposable
+    Parameters:
+       @OldProductID--ID of product being replaced
+       @NewProductID--ID of replacement product
+    Returns:
+       None
+    Error Checks:
+      None
+**/
 CREATE OR ALTER PROCEDURE dbo.UpdateCateringProduct @OldProductID int,
-											        @NewProductID int
+                                                    @NewProductID int
 AS
-UPDATE CateringDisposables
-SET ProductID = @NewProductID
-WHERE ProductID = @OldProductID;
+    UPDATE CateringDisposables
+       SET ProductID = @NewProductID
+     WHERE ProductID = @OldProductID;
 
 GO
 
---Change corresponding product for an ingredient
+/** 
+    Stored Procedure: UpdateIngredientProduct 
+    Usage: Change corresponding product for an ingredient
+    Parameters:
+       @OldProductID--ID of product being replaced
+       @NewProductID--ID of replacement product
+    Returns:
+       None
+    Error Checks:
+      None
+**/
 CREATE OR ALTER PROCEDURE dbo.UpdateIngredientProduct @OldProductID int,
-											          @NewProductID int
+                                                      @NewProductID int
 AS
-UPDATE MenuItemIngredients
-SET ProductID = @NewProductID
-WHERE ProductID = @OldProductID;
+    UPDATE MenuItemIngredients
+       SET ProductID = @NewProductID
+     WHERE ProductID = @OldProductID; 
 
 GO
 
---Delete order by order ID
+/** 
+    Stored Procedure: DeleteOrderByName 
+    Usage: Delete order by order ID
+    Parameters:
+       @OrderID--ID of order to be deleted
+    Returns:
+       None
+    Error Checks:
+      If either delete statement fails, nothing is deleted.
+**/
 CREATE OR ALTER PROCEDURE dbo.DeleteOrderByID @OrderID int
 AS
-    DELETE FROM OrderItems
-     WHERE OrderID = @OrderID
+  BEGIN
+      BEGIN TRY
+          SET NOCOUNT ON;
+          SET XACT_ABORT ON;
 
-    DELETE FROM Orders
-     WHERE ID = @OrderID; 
+          BEGIN TRANSACTION;
+
+          DELETE FROM OrderItems
+           WHERE OrderID = @OrderID
+
+          DELETE FROM Orders
+           WHERE ID = @OrderID;
+
+          COMMIT TRANSACTION;
+      END TRY
+
+      BEGIN CATCH
+          IF ( @@TRANCOUNT > 0 )
+            ROLLBACK TRANSACTION;
+
+          THROW 50004, 'No rows have been deleted', 1;
+      END CATCH
+  END 
 
 GO
 
---Delete order by order name
+/** 
+    Stored Procedure: DeleteOrderByName 
+    Usage: Delete order by order name
+    Parameters:
+       @OrderName--name of order to be deleted
+    Returns:
+       None
+    Error Checks:
+      Nothing is deleted if either delete statement fails.
+	  Can't add item if @OrderName input refers to multiple or no order names.
+**/
 CREATE OR ALTER PROCEDURE dbo.DeleteOrderByName @OrderName varchar(40)
 AS
-   IF (SELECT COUNT(*) FROM Orders WHERE OrderName LIKE '%' + @OrderName + '%') > 1
-   THROW 50002, 'More than one name returned', 1
+  BEGIN
+      BEGIN TRY
+          SET NOCOUNT ON;
+          SET XACT_ABORT ON;
 
-   IF (SELECT COUNT(*) FROM Orders WHERE OrderName LIKE '%' + @OrderName + '%') = 0
-   THROW 50003, 'No names returned', 1
+          BEGIN TRANSACTION;
 
-   DECLARE @OrderID AS INT
-    SELECT @OrderID = ID
-      FROM Orders
-     WHERE OrderName LIKE '%' + @OrderName + '%'
+          IF (SELECT Count(*)
+                FROM Orders
+               WHERE OrderName LIKE '%' + @OrderName + '%') > 1
+            THROW 50002, 'More than one name returned', 1
 
-    DELETE FROM OrderItems
-     WHERE OrderID = @OrderID
+          IF (SELECT Count(*)
+                FROM Orders
+               WHERE OrderName LIKE '%' + @OrderName + '%') = 0
+            THROW 50003, 'No names returned', 1
 
-    DELETE FROM Orders
-     WHERE ID = @OrderID; 
+          DECLARE @OrderID AS INT
 
+          SELECT @OrderID = ID
+            FROM Orders
+           WHERE OrderName LIKE '%' + @OrderName + '%'
+
+          DELETE FROM OrderItems
+           WHERE OrderID = @OrderID
+
+          DELETE FROM Orders
+           WHERE ID = @OrderID;
+
+          COMMIT TRANSACTION;
+      END TRY
+
+      BEGIN CATCH
+          IF ( @@TRANCOUNT > 0 )
+            ROLLBACK TRANSACTION;
+
+          THROW 50004, 'No rows have been deleted', 1;
+      END CATCH
+  END 
 GO
+ 
