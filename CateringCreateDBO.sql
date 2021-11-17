@@ -5,7 +5,7 @@
  *
  * Tables:
  *    Vendors (VendorName, Phone, Contact)
- *    Products (ProductName, VendorID, VendorItemCode, Quantity, Unit)
+ *    Products (ProductName, VendorID, VendorItemCode, Quantity, Unit, ProductType)
  *    CateringTypes (CateringType)
  *    PackagingTypes (PackagingType)
  *    CateringDisposables (CateringTypeID, ProductID)
@@ -24,7 +24,7 @@
  *                          CaseQuantityNeeded, Date, CaseQuantity, CaseUnit)
  *    PackagingDisposablesProductList(VendorName, VendorItemCode, ProductName, ProductQuantityNeeded, 
  *                                    CaseQuantityNeeded, Date, CaseQuantity, CaseUnit)
- *    CateringDisposablesProductList(VendorName, VendorItemCode, ProductName, ProductQuantityNeeded, 
+ *     CateringDisposablesProductList(VendorName, VendorItemCode, ProductName, ProductQuantityNeeded, 
  *                                    CaseQuantityNeeded, Date, CaseQuantity, CaseUnit)
  *    AllDisposablesList(VendorName, VendorItemCode, ProductName, ProductQuantityNeeded, 
  *                       CaseQuantityNeeded, Date, CaseQuantity, CaseUnit)
@@ -35,7 +35,7 @@
  *    NewOrderItem (@OrderID, @MenuItem, @Quantity)
  *    CreateOrderSheet (@StartDate, @EndDate)
  *    CreateDisposablesOrderSheet (@StartDate, @EndDate)
- *    UpdateProduct (@OldProductID, @NewProductID, @ProductType)
+ *    UpdateProduct (@OldProductID, @NewProductID)
  *    DeleteOrderByID (@OrderID)
  *    DeleteOrderByName (@OrderName)
  *
@@ -439,33 +439,49 @@ GO
     Parameters:
        @OldProductID--ID of product being replaced
        @NewProductID--ID of replacement product
-	   @ProductType-Product type
+	   @ProductType--Product type
     Returns:
        None
     Error Checks:
       Product will not be updated if product type is not packaging, catering, or ingredient
 **/
 CREATE OR ALTER PROCEDURE dbo.UpdateProduct @OldProductID int,
-                                            @NewProductID int,
-                                            @ProductType  varchar(40)
+                                            @NewProductID int
 AS
-    IF @ProductType LIKE '%packaging%'
+    DECLARE @OldProductType AS INT,
+            @NewProductType AS INT
+
+    SELECT @OldProductType = ProductType
+      FROM Products
+     WHERE ID = @OldProductID
+
+    SELECT @NewProductType = ProductType
+      FROM Products
+     WHERE ID = @NewProductID
+
+    IF @OldProductType <> @NewProductType
+      THROW 50007, 'Old and new product types do not match.', 1
+
+    IF @OldProductType IS NULL
+        OR @NewProductType IS NULL
+      THROW 50008, 'Product ID does not exist.', 1
+
+    IF @NewProductType = 2
       UPDATE PackagingDisposables
          SET ProductID = @NewProductID
        WHERE ProductID = @OldProductID;
 
-    IF @ProductType LIKE '%catering%'
+    IF @NewProductType = 3
       UPDATE CateringDisposables
          SET ProductID = @NewProductID
        WHERE ProductID = @OldProductID;
 
-    IF @ProductType LIKE '%ingredient%'
+    IF @NewProductType = 1
       UPDATE MenuItemIngredients
          SET ProductID = @NewProductID
        WHERE ProductID = @OldProductID;
-    ELSE
-      THROW 50006, 'product type must be packaging, catering or ingredients', 1 
-GO
+
+GO 
 
 /** 
     Stored Procedure: DeleteOrderByName 
