@@ -291,30 +291,30 @@ SELECT VendorName,
        VendorItemCode,
        ProductName,
        ProductQuantityNeeded,
-	   CaseQuantityNeeded,
+       CaseQuantityNeeded,
        Date,
-	   CaseQuantity,
-	   CaseUnit
+       CaseQuantity,
+       CaseUnit
   FROM IngredientsProductList
 UNION ALL
 SELECT VendorName,
        VendorItemCode,
        ProductName,
        ProductQuantityNeeded,
-	   CaseQuantityNeeded,
+       CaseQuantityNeeded,
        Date,
-	   CaseQuantity,
-	   CaseUnit
+       CaseQuantity,
+       CaseUnit
   FROM PackagingDisposablesProductList
 UNION ALL
 SELECT VendorName,
        VendorItemCode,
        ProductName,
        ProductQuantityNeeded,
-	   CaseQuantityNeeded,
+       CaseQuantityNeeded,
        Date,
-	   CaseQuantity,
-	   CaseUnit
+       CaseQuantity,
+       CaseUnit
   FROM CateringDisposablesProductList; 
 
 GO
