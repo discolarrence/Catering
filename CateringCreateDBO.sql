@@ -78,7 +78,7 @@ CREATE TABLE dbo.Products
      [VendorItemCode] varchar(40) NOT NULL,
      [Quantity]       decimal(10, 2) NOT NULL,
      [Unit]           varchar(10) NOT NULL,
-	 [ProductType]    int NOT NULL
+     [ProductType]    int NOT NULL
      FOREIGN KEY(VendorID) REFERENCES Vendors(ID)
   )
 
@@ -134,7 +134,7 @@ CREATE TABLE dbo.MenuItemIngredients
 CREATE TABLE dbo.Orders
   (
      [ID]             int NOT NULL IDENTITY PRIMARY KEY,
-	 [OrderName]      varchar(100) NOT NULL,
+     [OrderName]      varchar(100) NOT NULL,
      [CateringTypeID] int NOT NULL,
      [NumberOfGuests] int NOT NULL,
      [Date]           date NOT NULL,
@@ -177,16 +177,16 @@ AS
 SELECT v.VendorName,
        p.VendorItemCode,
        p.ProductName,
-	   ( ( o.NumberOfGuests / m.RecipeServings ) * mi.ProductQuantity ) AS
-	   ProductQuantityNeeded,
+       ( ( o.NumberOfGuests / m.RecipeServings ) * mi.ProductQuantity ) AS
+       ProductQuantityNeeded,
        ( ( o.NumberOfGuests / m.RecipeServings ) * mi.ProductQuantity ) /
        p.Quantity AS
        CaseQuantityNeeded,
        o.Date,
-	   p.Quantity AS
-	   CaseQuantity,
+       p.Quantity AS
+       CaseQuantity,
        p.Unit AS
-	   CaseUnit
+       CaseUnit
   FROM Orders o
        INNER JOIN OrderItems i
                ON o.ID = i.OrderID
@@ -207,7 +207,7 @@ AS
 SELECT v.VendorName,
        p.VendorItemCode,
        p.ProductName,
-	   CASE
+       CASE
          WHEN d.NumberOfGuestsPerEach = 0 THEN 1
          ELSE i.MenuItemQuantity / d.NumberOfGuestsPerEach 
        END AS
@@ -218,10 +218,10 @@ SELECT v.VendorName,
        END AS
        CaseQuantityNeeded,
        o.Date,
-	   p.Quantity AS
-	   CaseQuantity,
+       p.Quantity AS
+       CaseQuantity,
        p.Unit AS
-	   CaseUnit
+       CaseUnit
   FROM Orders o
        INNER JOIN OrderItems i
                ON o.ID = i.OrderID
@@ -243,11 +243,11 @@ AS
 SELECT v.VendorName,
        p.VendorItemCode,
        p.ProductName,
-	   o.NumberOfGuests AS ProductQuantityNeeded,
+       o.NumberOfGuests AS ProductQuantityNeeded,
        o.NumberOfGuests / p.Quantity AS CaseQuantityNeeded,
        o.Date,
-	   p.Quantity AS
-	   CaseQuantity,
+       p.Quantity AS
+       CaseQuantity,
        p.Unit AS
 	   CaseUnit
   FROM Orders o
@@ -267,20 +267,20 @@ SELECT VendorName,
        VendorItemCode,
        ProductName,
        ProductQuantityNeeded,
-	   CaseQuantityNeeded,
+       CaseQuantityNeeded,
        Date,
-	   CaseQuantity,
-	   CaseUnit
+       CaseQuantity,
+       CaseUnit
   FROM PackagingDisposablesProductList
 UNION ALL
 SELECT VendorName,
        VendorItemCode,
        ProductName,
-	   ProductQuantityNeeded,
-	   CaseQuantityNeeded,
+       ProductQuantityNeeded,
+       CaseQuantityNeeded,
        Date,
-	   CaseQuantity,
-	   CaseUnit
+       CaseQuantity,
+       CaseUnit
   FROM CateringDisposablesProductList; 
 
 GO
@@ -291,10 +291,10 @@ SELECT VendorName,
        VendorItemCode,
        ProductName,
        ProductQuantityNeeded,
-	   CaseQuantityNeeded,
+       CaseQuantityNeeded,
        Date,
-	   CaseQuantity,
-	   CaseUnit
+       CaseQuantity,
+       CaseUnit
   FROM IngredientsProductList
 UNION ALL
 SELECT VendorName,

@@ -19,7 +19,7 @@ Catering is a database created to assist chefs/kitchen managers in ordering supp
 | Feature | Command |
 | ----------- | ----------- |
 | Create All Catering Supplies Needed List For Specified Time Period| CreateOrderSheet @StartDate=="day one of time period, @EndDate="last day of time period" |
-| Create Disposables Supplies Needed List For Specified Time Period| CreateDisposablesOrderSheet @StartDate=="day one of time period, @EndDate="last day of time period" |
+| Create Disposables Supplies Needed List For Specified Time Period| CreateDisposablesOrderSheet @StartDate=="day one of time period, @EndDate="last day of time period" *YYYYMMDD format*|
 | Change Product Used In Ingredients List | UpdateProduct @NewProductID = "new product ID" , @OldProductID = "old product ID" |
 | Delete Order By ID| DeleteOrderByID @OrderID = "order ID" |
 | Delete Order By Name| DeleteOrderByName @OrderName = "order name" |
