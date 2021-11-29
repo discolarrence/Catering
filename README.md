@@ -1,13 +1,12 @@
-# SQL Project for Code Louisville
-
-## Introduction
-This repository is an example project for the [Code Louisville](https://www.codelouisville.org/) Fall 2021 SQL course. The purpose of this code is to demonstrate the use of SQL and Git.
+# Catering
 
 ## Project Description
 
-**Catering**
+Catering was built to address a problem I had as a restaurant chef. I could easily generate a weekly order for the restaurant by checking inventory against par lists, but my order for supplies needed for catering orders (which often included items not on the regular menu) was calculated by hand and sometimes included time-consuming searches through vendor catalogs. 
 
-Catering is a database created to assist in ordering supplies based on catering orders. It was built to address a problem I had as a restaurant chef. I could easily generate a weekly order for the restaurant by checking inventory against par lists, but my order for supplies needed for catering orders (which often included items not on the regular menu) was calculated by hand and often included time-consuming searches through vendor catalogs. The main purpose is to maintain a database of all products associated with the catering menu and generate a supply needs list, either on its own or combined with a restaurant par list and checked against inventory to generate an order sheet.
+The main purpose of this application is to maintain a database of all products associated with the catering menu and generate a supply needs list, which can then be checked against inventory--on its own or combined with a restaurant par list--to create an order sheet.
+
+Catering was my project for the [Code Louisville](https://www.codelouisville.org/) Fall 2021 SQL course.
 
 ## Features
 
@@ -18,7 +17,7 @@ Catering is a database created to assist in ordering supplies based on catering 
 
 | Feature | Command |
 | ----------- | ----------- |
-| Create All Catering Supplies Needed List For Specified Time Period| CreateOrderSheet @StartDate=="day one of time period, @EndDate="last day of time period" |
+| Create All Catering Supplies Needed List For Specified Time Period| CreateOrderSheet @StartDate=="day one of time period, @EndDate="last day of time period" *YYYYMMDD format expected*|
 | Create Disposables Supplies Needed List For Specified Time Period| CreateDisposablesOrderSheet @StartDate=="day one of time period, @EndDate="last day of time period" *YYYYMMDD format expected*|
 | Change Product Used In Ingredients List | UpdateProduct @NewProductID = "new product ID" , @OldProductID = "old product ID" |
 | Delete Order By ID| DeleteOrderByID @OrderID = "order ID" |
@@ -31,27 +30,3 @@ Catering is a database created to assist in ordering supplies based on catering 
 - Execute the CateringCreateDBO.sql script to create the database objects
 - Execute the CateringData.sql script to load the sample data
 - CateringSampleCommands.sql has example commands to show how to use stored procedures
-
-## Project Requirements
-
-**Group 1: Reading Data from a Database**
-
-- Write a SELECT query that uses a WHERE clause.
-- Write a  SELECT query that utilizes a JOIN.
-- Write a  SELECT query that utilizes a JOIN with 3 or more tables.
-- Write a  SELECT query that utilizes a LEFT JOIN.
-- Write a  SELECT query that utilizes a variable in the WHERE clause.
-- Write a  SELECT query that utilizes an ORDER BY clause.
-- Write a  SELECT query that utilizes a GROUP BY clause along with an aggregate function.
-- Write a SELECT query that utilizes a CALCULATED FIELD.
-- Write a SELECT query that utilizes a SUBQUERY.
-
-**Group 2: Updating/Deleting Data from a Database**
-
-- Write a DML statement that UPDATEs a set of rows with a WHERE clause. The values used in the WHERE clause should be a variable.
-- Write a DML statement that DELETEs a set of rows with a WHERE clause. The values used in the WHERE clause should be a variable.
-- Write a DML statement that DELETEs rows from a table that another table references. This script will have to also DELETE any records that reference these rows. Both of the DELETE statements need to be wrapped in a single TRANSACTION.
-
-**Group 3: Optimizing a Database**
-
-- Design a NONCLUSTERED INDEX with ONE KEY COLUMN that improves the performance of one of the above queries.

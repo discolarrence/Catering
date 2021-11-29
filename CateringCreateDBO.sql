@@ -211,7 +211,7 @@ SELECT v.VendorName,
          WHEN d.NumberOfGuestsPerEach = 0 THEN 1
          ELSE i.MenuItemQuantity / d.NumberOfGuestsPerEach 
        END AS
-	   ProductQuantityNeeded,
+	     ProductQuantityNeeded,
        CASE
          WHEN d.NumberOfGuestsPerEach = 0 THEN 1 / p.Quantity
          ELSE ( i.MenuItemQuantity / d.NumberOfGuestsPerEach ) / p.Quantity
@@ -233,11 +233,11 @@ SELECT v.VendorName,
                ON d.ProductID = p.ID
         LEFT JOIN Vendors v
                ON v.ID = p.VendorID
- WHERE o.CateringTypeID = d.CateringTypeID; 
+  WHERE o.CateringTypeID = d.CateringTypeID; 
 
- GO
+GO
 
- --Create catering disposables view
+--Create catering disposables view
 CREATE OR ALTER VIEW CateringDisposablesProductList
 AS
 SELECT v.VendorName,
@@ -249,18 +249,18 @@ SELECT v.VendorName,
        p.Quantity AS
        CaseQuantity,
        p.Unit AS
-	   CaseUnit
+	     CaseUnit
   FROM Orders o
        INNER JOIN CateringDisposables c
                ON o.CateringTypeID = c.CateringTypeID
         LEFT JOIN Products p
                ON p.ID = c.ProductID
         LEFT JOIN Vendors v
-              ON v.ID = p.VendorID; 
+               ON v.ID = p.VendorID; 
 
- GO
+GO
 
- --Create all disposables view
+--Create all disposables view
 CREATE OR ALTER VIEW AllDisposablesProductList
 AS
 SELECT VendorName,
@@ -284,7 +284,8 @@ SELECT VendorName,
   FROM CateringDisposablesProductList; 
 
 GO
- --Create all product view
+
+--Create all product view
 CREATE OR ALTER VIEW AllProductList
 AS
 SELECT VendorName,
@@ -368,11 +369,11 @@ GO
     Stored Procedure: CreateOrderSheet 
     Usage: Create supply order sheet based on catering orders for a specified time period 
     Parameters:
-       @StartDate--first day of order period
-       @EndDate--last day of order period
+       @StartDate--first day of order period (YYYYMMDD format expected)
+       @EndDate--last day of order period (YYYYMMDD format expected)
     Returns:
        Result Set: VendorName, VendorItemCode, ProductName, ProductQuantityNeeded, 
-	   CaseQuantityNeeded, RawCaseQuantityNeeded, CaseQuantity, CaseUnit
+	     CaseQuantityNeeded, RawCaseQuantityNeeded, CaseQuantity, CaseUnit
     Error Checks:
        None
 **/
@@ -403,11 +404,11 @@ GO
     Stored Procedure: CreateDisposablesOrderSheet 
     Usage: Create supply order sheet based on catering orders for a specified time period 
     Parameters:
-       @StartDate--first day of order period
-       @EndDate--last day of order period
+       @StartDate--first day of order period (YYYYMMDD format expected)
+       @EndDate--last day of order period (YYYYMMDD format expected)
     Returns:
        Result Set: VendorName, VendorItemCode, ProductName, ProductQuantityNeeded, 
-	   CaseQuantityNeeded, RawCaseQuantityNeeded, CaseQuantity, CaseUnit
+	     CaseQuantityNeeded, RawCaseQuantityNeeded, CaseQuantity, CaseUnit
     Error Checks:
        None
 **/
@@ -440,7 +441,7 @@ GO
     Parameters:
        @OldProductID--ID of product being replaced
        @NewProductID--ID of replacement product
-	   @ProductType--Product type
+	     @ProductType--Product type
     Returns:
        None
     Error Checks:
@@ -537,7 +538,7 @@ GO
        None
     Error Checks:
       Nothing is deleted if either delete statement fails.
-	  Can't add item if @OrderName input refers to multiple or no order names.
+	    Can't add item if @OrderName input refers to multiple or no order names.
 **/
 CREATE OR ALTER PROCEDURE dbo.DeleteOrderByName @OrderName varchar(40)
 AS
@@ -580,5 +581,6 @@ AS
           THROW 50004, 'No rows have been deleted', 1;
       END CATCH
   END 
+
 GO
  
